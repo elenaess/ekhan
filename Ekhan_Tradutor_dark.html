@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ekhan · Tradutor Português → Ekhan</title>
+<style>
+  /* ====== Paleta: esmalte cloisonné georgiano + iluminura armênia ====== */
+  :root{
+    --ink:#000000;         /* azul-tinta de manuscrito (fundo)      */
+    --ink-2:#0d0d0d;       /* painel escuro                          */
+    --vellum:#f2f2f2;      /* pergaminho envelhecido (painel claro)  */
+    --vellum-2:#1a1a1a;    /* pergaminho mais escuro                 */
+    --lapis:#2b4aa0;       /* lápis-lazúli (estrutura, substantivos) */
+    --lapis-lt:#4f74d6;
+    --gold:#c8a24a;        /* ouro de iluminura (acento/eyebrow)     */
+    --gold-dp:#a07d2c;
+    --garnet:#973232;      /* granada (verbos)                       */
+    --verdigris:#2f6b5e;   /* esmalte verde (adjetivos)              */
+    --plum:#6c3f6a;        /* ametista (numerais)                    */
+    --line:#3a3f57;
+    --muted:#6b6f86;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#000;
+    color:var(--vellum);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 72px;}
+
+  /* ====== Cabeçalho ====== */
+  .masthead{display:flex;align-items:center;gap:18px;padding-bottom:22px;border-bottom:1px solid var(--line);}
+  .seal{flex:0 0 auto;width:56px;height:56px;}
+  .seal svg{display:block;width:56px;height:56px;}
+  .titles{flex:1 1 auto;min-width:0;}
+  .eyebrow{
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    text-transform:uppercase;letter-spacing:.32em;font-size:11px;font-weight:600;
+    color:var(--gold);margin:0 0 4px;
+  }
+  h1{margin:0;font-size:30px;font-weight:600;letter-spacing:.01em;color:var(--vellum);}
+  h1 .ek{color:var(--gold);}
+  .subtitle{margin:2px 0 0;font-size:14px;color:#b9b092;font-style:italic;}
+
+  /* ====== Painel de trabalho (códice de duas colunas) ====== */
+  .codex{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:26px;
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    box-shadow:0 18px 50px -24px rgba(0,0,0,.7);}
+  .pane{padding:22px 22px 20px;min-height:260px;display:flex;flex-direction:column;}
+  .pane-src{background:linear-gradient(180deg,var(--ink-2),#141830);border-right:1px solid var(--line);}
+  .pane-out{background:linear-gradient(180deg,var(--vellum),var(--vellum-2));color:#2a2416;position:relative;}
+  .pane-label{
+    font-family:ui-sans-serif,system-ui,sans-serif;text-transform:uppercase;
+    letter-spacing:.28em;font-size:10px;font-weight:700;margin:0 0 12px;
+  }
+  .pane-src .pane-label{color:var(--gold);}
+  .pane-out .pane-label{color:var(--gold-dp);}
+
+  textarea{
+    flex:1 1 auto;width:100%;resize:vertical;min-height:150px;border:0;outline:0;background:transparent;
+    color:var(--vellum);font-family:inherit;font-size:20px;line-height:1.55;
+  }
+  textarea::placeholder{color:#5c6079;font-style:italic;}
+
+  .ek-out{flex:1 1 auto;font-size:23px;line-height:1.5;color:#241f12;letter-spacing:.01em;
+    white-space:pre-wrap;word-break:break-word;}
+  .ek-out .placeholder{color:#8a815f;font-style:italic;font-size:18px;}
+  .ek-out .unknown{color:var(--garnet);border-bottom:1px dotted var(--garnet);}
+
+  /* ====== Barra de ações ====== */
+  .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px;}
+  .btn{
+    font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:.02em;
+    border:0;border-radius:8px;padding:12px 22px;cursor:pointer;color:#fff;
+    background:linear-gradient(180deg,var(--lapis-lt),var(--lapis));
+    box-shadow:0 2px 0 var(--gold-dp), 0 10px 24px -12px rgba(43,74,160,.9);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(1px);box-shadow:0 1px 0 var(--gold-dp);}
+  .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+  .toggle{
+    font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;color:#c9c0a4;
+    display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
+  }
+  .toggle input{accent-color:var(--gold);width:16px;height:16px;}
+  .hint{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:var(--muted);margin-left:auto;}
+
+  /* ====== Exemplos ====== */
+  .examples{margin-top:20px;}
+  .examples .lbl{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;text-transform:uppercase;
+    letter-spacing:.24em;color:var(--muted);margin-bottom:8px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;color:var(--vellum);
+    background:#191d31;border:1px solid var(--line);border-radius:20px;padding:6px 13px;cursor:pointer;
+    transition:border-color .12s ease,color .12s ease;
+  }
+  .chip:hover{border-color:var(--gold);color:var(--gold);}
+
+  /* ====== Glosa interlinear (elemento-assinatura) ====== */
+  .gloss{margin-top:28px;border-top:1px solid var(--line);padding-top:22px;display:none;}
+  .gloss.show{display:block;}
+  .gloss h2{font-size:13px;text-transform:uppercase;letter-spacing:.28em;color:var(--gold);
+    font-family:ui-sans-serif,system-ui,sans-serif;font-weight:700;margin:0 0 16px;}
+  .interlinear{display:flex;flex-wrap:wrap;gap:10px 12px;}
+  .tok{border:1px solid var(--line);border-radius:8px;padding:9px 12px 8px;
+    background:#141830;min-width:52px;}
+  .tok .t-ek{font-size:19px;line-height:1.2;color:var(--vellum);}
+  .tok .t-pt{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;color:#8f95ad;margin-top:4px;}
+  .tok .t-tag{font-family:ui-sans-serif,system-ui,sans-serif;font-size:9px;letter-spacing:.14em;
+    text-transform:uppercase;margin-top:5px;color:var(--muted);}
+  .tok.k-verbo .t-ek{color:#e08c8c;} .tok.k-verbo{border-color:#5a2b2b;} .tok.k-verbo .t-tag{color:#c07272;}
+  .tok.k-cop   .t-ek{color:#e0a08c;} .tok.k-cop{border-color:#5a3b2b;}
+  .tok.k-subst .t-ek{color:#8fa8ee;} .tok.k-subst{border-color:#2b3d6a;} .tok.k-subst .t-tag{color:#7f97dd;}
+  .tok.k-adj   .t-ek{color:#7fc9b9;} .tok.k-adj{border-color:#255249;} .tok.k-adj .t-tag{color:#6fb9a9;}
+  .tok.k-num   .t-ek{color:#c79ac4;} .tok.k-num{border-color:#4a2f48;}
+  .tok.k-pron-suj .t-ek,.tok.k-pron-obj .t-ek,.tok.k-poss .t-ek{color:var(--gold);}
+  .tok.k-pron-suj,.tok.k-pron-obj,.tok.k-poss{border-color:#5a4a1e;}
+  .tok.k-descon .t-ek{color:#e08c8c;font-style:italic;}
+  .tok.k-gram{opacity:.72;} .tok.k-gram .t-ek{font-size:13px;font-style:italic;color:#9aa;}
+  .tok.k-pont{opacity:.5;min-width:0;padding:9px 8px;}
+
+  /* ====== Rodapé ====== */
+  .foot{margin-top:40px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:var(--muted);
+    border-top:1px solid var(--line);padding-top:18px;line-height:1.7;}
+  .foot b{color:#b9b092;font-weight:600;}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+  @media (max-width:720px){
+    .codex{grid-template-columns:1fr;}
+    .pane-src{border-right:0;border-bottom:1px solid var(--line);}
+    h1{font-size:24px;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+  .fade-in{animation:fade .28s ease both;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="titles">
+      <p class="eyebrow">Língua construída</p>
+      <h1>Tradutor <span class="ek">Ekhan</span></h1>
+      <p class="subtitle">do português para o Ekhan</p>
+    </div>
+  </header>
+
+  <main class="codex">
+    <section class="pane pane-src">
+      <p class="pane-label">Português</p>
+      <textarea id="src" placeholder="Escreva uma frase… ex.: Eu quero comer o pão."></textarea>
+    </section>
+    <section class="pane pane-out">
+      <p class="pane-label">Ekhan</p>
+      <div id="out" class="ek-out"><span class="placeholder">A tradução aparece aqui.</span></div>
+    </section>
+  </main>
+
+  <div class="actions">
+    <button id="go" class="btn">Traduzir</button>
+    <label class="toggle"><input type="checkbox" id="showgloss"> Mostrar análise palavra a palavra</label>
+    <span class="hint">Ctrl/⌘ + Enter para traduzir</span>
+  </div>
+
+  <div class="examples">
+    <p class="lbl">Experimente</p>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <section class="gloss" id="gloss">
+    <h2>Análise interlinear</h2>
+    <div class="interlinear" id="interlinear"></div>
+  </section>
+
+  <footer class="foot">
+    <b>Como funciona.</b> Este é um tradutor <b>baseado em regras</b>: reconhece a flexão do português,
+    encontra a raiz no léxico de 599 palavras (nativas + de ) e reescreve a frase
+    em Ekhan, marcando caso, tempo e modo. Palavras sem entrada aparecem entre ⟨colchetes⟩ e transliteradas.
+    É uma aproximação didática, não um tradutor estatístico.
+    <div class="legend">
+      <span><i class="dot" style="background:#8fa8ee"></i>substantivo</span>
+      <span><i class="dot" style="background:#e08c8c"></i>verbo</span>
+      <span><i class="dot" style="background:#7fc9b9"></i>adjetivo</span>
+      <span><i class="dot" style="background:#c79ac4"></i>numeral</span>
+      <span><i class="dot" style="background:#c8a24a"></i>pronome</span>
+    </div>
+  </footer>
+</div>
+
+<script id="ekhan-lib">
+/* === Biblioteca Ekhan embutida (grammar + lexicon + morphology + translator) === */
+/* ============================================================================
+   EKHAN — GRAMÁTICA / NÚCLEO (ekhan-grammar.js)
+   Tabelas de fonologia, casos, pronomes, sistema verbal (TAM), modos,
+   auxiliares modais, cópula, derivação, numerais, calendário, saudações,
+   cores e todas as palavras funcionais (conjunções, preposições, advérbios,
+   interrogativos, indefinidos, quantificadores, demonstrativos, possessivos).
+
+   Fonte: planilha "Ekhan V2" (paradigma moderno) + regularizações documentadas
+   em Ekhan_-_Mudancas.md. Influências novas:  (ver léxico).
+   ========================================================================== */
+(function (root) {
+  'use strict';
+
+  /* ------------------------------------------------------------------ */
+  /* 1. FONOLOGIA                                                        */
+  /* ------------------------------------------------------------------ */
+  var PHONOLOGY = {
+    consonants: [
+      // romaniz. : IPA : descrição
+      {r:'p', ipa:'p',  desc:'oclusiva bilabial surda'},
+      {r:'b', ipa:'b',  desc:'oclusiva bilabial sonora'},
+      {r:'t', ipa:'t',  desc:'oclusiva alveolar surda'},
+      {r:'d', ipa:'d',  desc:'oclusiva alveolar sonora'},
+      {r:'k', ipa:'k',  desc:'oclusiva velar surda'},
+      {r:'g', ipa:'g',  desc:'oclusiva velar sonora'},
+      {r:'m', ipa:'m',  desc:'nasal bilabial'},
+      {r:'n', ipa:'n',  desc:'nasal alveolar'},
+      {r:'r', ipa:'r',  desc:'vibrante múltipla alveolar'},
+      {r:'ɾ (r suave)', ipa:'ɾ', desc:'vibrante simples (tap) alveolar'},
+      {r:'f', ipa:'f',  desc:'fricativa labiodental surda'},
+      {r:'v', ipa:'v',  desc:'fricativa labiodental sonora'},
+      {r:'β (bh)', ipa:'β', desc:'fricativa bilabial sonora'},
+      {r:'ð (dh)', ipa:'ð', desc:'fricativa dental sonora (como "th" de "this")'},
+      {r:'s', ipa:'s',  desc:'fricativa alveolar surda'},
+      {r:'z', ipa:'z',  desc:'fricativa alveolar sonora'},
+      {r:'š/sh', ipa:'ʃ', desc:'fricativa pós-alveolar surda'},
+      {r:'x (kh)', ipa:'x', desc:'fricativa velar surda'},
+      {r:'h', ipa:'h',  desc:'fricativa glotal surda'},
+      {r:'ɬ (hl)', ipa:'ɬ', desc:'fricativa lateral alveolar surda (como "ll" galês)'},
+      {r:'l', ipa:'l',  desc:'lateral aproximante alveolar'},
+      {r:'ʎ (lh)', ipa:'ʎ', desc:'lateral aproximante palatal'},
+      {r:'j', ipa:'j', desc:'aproximante palatal / semivogal'},
+      {r:'w', ipa:'w', desc:'aproximante labiovelar / semivogal'}
+    ],
+    vowels: [
+      {r:'a', ipa:'a'}, {r:'e', ipa:'ɛ~e'}, {r:'i', ipa:'i'},
+      {r:'o', ipa:'ɔ~o'}, {r:'u', ipa:'u'}, {r:'ə', ipa:'ə', desc:'schwa átono'},
+      {r:'ā', ipa:'aː', desc:'longa'}, {r:'ē', ipa:'eː'}, {r:'ī', ipa:'iː'},
+      {r:'ō', ipa:'oː'}, {r:'ū', ipa:'uː'},
+      {r:'á/é/í/ó/ú', ipa:'ˈ', desc:'vogal tônica marcada'}
+    ],
+    // regras fonotáticas resumidas
+    phonotactics: [
+      'Sílaba máxima: (C)(C)V(C). Núcleo sempre vocálico.',
+      'Encontros consonantais iniciais comuns: sc-, st-, sp-, bl-, gr-, kr-, tr-, sr-, hl-.',
+      'Acento: recai na sílaba marcada (á, ē…); sem marca, recai na penúltima.',
+      'Vogais longas (ā ē ī ō ū) contam como núcleo pesado e atraem o acento.',
+      'ə aparece apenas em sílaba átona (frequente em raízes de origem antiga).'
+    ]
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 2. PRONOMES (paradigma moderno) — todos os casos                    */
+  /*    Ordem de casos: nom, acc, gen, dat, loc, ins                     */
+  /* ------------------------------------------------------------------ */
+  var PRONOUNS = {
+    order: ['av','mu','yt','ea','eula','tau','am'],
+    labels: {
+      av:'eu', mu:'tu/você', yt:'ele/ela/isto', ea:'nós (inclusivo)',
+      eula:'nós (exclusivo)', tau:'vós/vocês', am:'eles/elas'
+    },
+    //            nom     acc     gen     dat     loc      ins
+    table: {
+      av:   {nom:'Av',  acc:'Imi', gen:'As',  dat:'Avis', loc:'Avu',  ins:'Aussa'},
+      mu:   {nom:'Mu',  acc:'Mai', gen:'Mist',dat:'Muon', loc:'Munuj',ins:'Men'},
+      yt:   {nom:'Yt',  acc:'Iria',gen:'Iss', dat:'Yni',  loc:'Ynu',  ins:'Ysc'},
+      ea:   {nom:'Ea',  acc:'Ena', gen:'En',  dat:'Ina',  loc:'Inu',  ins:'Enie'},
+      eula: {nom:'Eula',acc:'Eosi',gen:'Eu',  dat:'Iva',  loc:'Ivu',  ins:'Eulsc'},
+      tau:  {nom:'Tau', acc:'Tai', gen:'Tou', dat:'Tavi', loc:'Tavu', ins:'Tausc'},
+      am:   {nom:'Am',  acc:'Aimi',gen:'Aist',dat:'Aren', loc:'Arenu',ins:'Asc'}
+    },
+    // atalho: possessivos (= genitivo) mapeados do português
+    possessivePT: {
+      'meu':'As','minha':'As','meus':'As','minhas':'As',
+      'teu':'Mist','tua':'Mist','teus':'Mist','tuas':'Mist','seu':'Iss','sua':'Iss','seus':'Iss','suas':'Iss',
+      'dele':'Iss','dela':'Iss','nosso':'En','nossa':'En','nossos':'En','nossas':'En',
+      'vosso':'Tou','vossa':'Tou','de vocês':'Tou','deles':'Aist','delas':'Aist'
+    },
+    // pronomes-sujeito a partir do português
+    subjectPT: {
+      'eu':'av', 'tu':'mu','voce':'mu','você':'mu',
+      'ele':'yt','ela':'yt','isto':'yt','isso':'yt','aquilo':'yt',
+      'nos':'ea','nós':'ea','a gente':'ea',
+      'vos':'tau','vós':'tau','voces':'tau','vocês':'tau',
+      'eles':'am','elas':'am'
+    },
+    // pronomes-objeto (acusativo) a partir do português
+    objectPT: {
+      'me':'Imi','te':'Mai','o':'Iria','a':'Iria','lhe':'Iria',
+      'nos':'Ena','vos':'Tai','os':'Aimi','as':'Aimi','lhes':'Aimi'
+    }
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 3. CASOS NOMINAIS — desinências (singular / plural)                 */
+  /*    Alomorfe escolhido pela terminação da raiz (vogal vs consoante). */
+  /*    Formato: [após-consoante, após-vogal]                            */
+  /* ------------------------------------------------------------------ */
+  var CASES = {
+    order: ['nom','acc','gen','dat','loc','ins'],
+    labelsPT: {nom:'nominativo (sujeito)', acc:'acusativo (objeto direto)',
+      gen:'genitivo (posse / "de")', dat:'dativo (alvo / "a, para")',
+      loc:'locativo (lugar / "em")', ins:'instrumental-comitativo ("com, por meio de")'},
+    singular: {
+      nom:['',''],     // nominativo = forma-base (raiz nua). Var. enfática: -o/-os.
+      nomEmph:['o','os'],
+      acc:['as','s'],
+      gen:['ia','nia'],
+      dat:['ssi','ei'],
+      loc:['u','nuj'],
+      ins:['ait','nau']
+    },
+    plural: {
+      nom:['i','t'],
+      acc:['an','n'],
+      gen:['nea','ea'],
+      dat:['ssai','ai'],
+      loc:['em','men'],
+      ins:['eit','neu']
+    },
+    // preposições portuguesas que disparam caso oblíquo no Ekhan
+    prepCase: {
+      'de':'gen','do':'gen','da':'gen','dos':'gen','das':'gen',
+      'a':'dat','ao':'dat','à':'dat','aos':'dat','às':'dat','para':'dat','pra':'dat',
+      'em':'loc','no':'loc','na':'loc','nos':'loc','nas':'loc','dentro de':'loc',
+      'com':'ins','por meio de':'ins'
+    }
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 4. ARTIGOS                                                          */
+  /* ------------------------------------------------------------------ */
+  var ARTICLES = {
+    // definido: enclítico -il (após consoante) / -nil (após vogal)
+    definite:  ['il','nil'],
+    // indefinido: não-marcado (opcionalmente reforçado por "lus" = um)
+    indefinitePT: ['um','uma'],
+    definitePT:   ['o','a','os','as']
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 5. SISTEMA VERBAL — desinências pessoais por tempo e classe         */
+  /*    Classes: 'calum' (raiz com última vogal a/o/u) e 'sine' (e/i).   */
+  /*    Cada célula: {calum:'…', sine:'…'} ou string se invariável.      */
+  /*    Ordem de pessoas: av mu yt ea eula tau am                        */
+  /* ------------------------------------------------------------------ */
+  var VERB = {
+    persons: ['av','mu','yt','ea','eula','tau','am'],
+
+    // PRESENTE (a planilha chama "gerúndio"): morrer→tagow, comer→riw
+    present: {
+      av:'w',
+      mu:{calum:'ih', sine:'uh'},
+      yt:'h',
+      ea:{calum:'aih', sine:'auh'},
+      eula:{calum:'aih', sine:'auh'},
+      tau:'cah',
+      am:{calum:'mi', sine:'ma'}
+    },
+    // PASSADO / PERFEITO ("non-future"): morri→tagot, comi→rit
+    past: {
+      av:'t',
+      mu:{calum:'is', sine:'us'},
+      yt:{calum:'ni', sine:'na'},
+      ea:{calum:'ais', sine:'aus'},
+      eula:{calum:'ais', sine:'aus'},
+      tau:'cas',
+      am:{calum:'im', sine:'um'}
+    },
+    // FUTURO: morrerei→tagosc, comerei→risa
+    future: {
+      av:{calum:'sc', sine:'sa'},
+      mu:{calum:'il', sine:'ul'},
+      yt:'l',
+      ea:{calum:'iv', sine:'uv'},
+      eula:{calum:'iv', sine:'uv'},
+      tau:{calum:'casc', sine:'casa'},   // regularizado (planilha usava marcador vazio)
+      am:'meh'
+    },
+    // RADICAL DE PARTICÍPIO ("realizado"): base para mais-que-perfeito e condicional
+    participle: {
+      av:'st',
+      mu:{calum:'ist', sine:'ust'},
+      yt:'nt',
+      ea:{calum:'aist', sine:'aust'},
+      eula:{calum:'aist', sine:'aust'},
+      tau:'cast',
+      am:{calum:'int', sine:'unt'}
+    },
+
+    // tempos derivados (aplicados sobre uma forma já flexionada)
+    derived: {
+      imperfect:   {base:'present',    add:'ni'},   // morria = tagow+ni
+      pluperfect:  {base:'participle', add:'u'},    // tinha morrido = tagost+u
+      immediate:   {base:'present',    add:'nu'},   // vou morrer = tagow+nu
+      conditional: {base:'participle', add:'au'}    // morreria = tagost+au
+    },
+
+    // MODOS
+    moods: {
+      infinitive: {rule:'C->+a, V->+h'},   // mast→masta, ri→rih
+      subjunctive:{particle:'ta', over:'tensedForm'}, // ta + forma flexionada (ta riw / ta rit / ta risa)
+      imperative: {particle:'ou', over:'root'},       // ou + raiz (ou ri)
+      admirative: {particle:'he', over:'tensedForm'}  // he + forma (he tagon)
+    },
+
+    // CÓPULA (ser/estar/parecer/permanecer/continuar/ficar/tornar) — sem tempo
+    copula: {av:'Ava', mu:'Mi', yt:'Ist', ea:'En', eula:'Eu', tau:'Ti', am:'Amí'},
+
+    // AUXILIARES MODAIS (partícula antes do verbo). par: [presente, passado]
+    modals: {
+      dever:        {p:['on','eon'],  ptTriggers:['dever','deve','deveria','devia','devo','deves']},
+      conselho:     {p:['auf','ef'],  ptTriggers:['deveria (conselho)']},
+      necessidade:  {p:['das','edas'],ptTriggers:['precisar','preciso','precisa','ter que','tem que','tinha que']},
+      possibilidade:{p:['lau','lea'], ptTriggers:['poder','pode','poderia','podia','posso','podes']},
+      pedido:       {p:['com','ce'],  ptTriggers:['gostar de','gostaria','queria (pedido)']},
+      querer:       {p:['y','y'],     ptTriggers:['querer','quero','quer','queria','queres']},
+      duvida:       {p:['nos','nos'], ptTriggers:['talvez','pode ser que']}
+    },
+
+    // partículas de negação/afirmação
+    negation: {simple:'es', reinforced:'euma'},
+    affirmation: {simple:'heia', strong:'ahmi'}
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 6. DERIVAÇÃO — sufixos produtivos                                   */
+  /*    par [após-consoante, após-vogal] quando houver alomorfia          */
+  /* ------------------------------------------------------------------ */
+  var DERIVATION = {
+    infinitive:  ['a','h'],          // substantivo->verbo
+    able:        'vahas',            // adj "-ável/-ível"  (rí→rívahas)
+    agent:       ['ess','ness'],     // "-dor/-ante que atua" (nati→natiess)
+    capacity:    ['isc','nisc'],     // "-ístico/capaz de"   (missa→missanisc)
+    relative:    'yn',               // "relativo a"         (ásato→ásatyn)
+    participle:  ['nín','nín'],      // adjetivo participial (some→somenín)
+    profession:  ['eht','eht'],      // profissão base       (ásat→ásateht) ; var: -la, -bir, -it
+    professionAlt:{modifies:'la', handles:'bir', actsOn:'it'},
+    concept:     ['iani','liani'],   // ideia/conceito       (X→Xiani)
+    religion:    ['ec','tec'],
+    language:    ['nin','in'],
+    nationality: ['anis','anis'],
+    country:     'mact',             // país/estado (mact + X)
+    animalNoun:  ['lej','uss'],
+    machine:     ['ussa','nussa'],
+    color:       ['in','sin'],
+    festivity:   'rín',
+    quality:     ['nin','in'],       // adjetivo de qualidade
+    // comparativos (advérbios/adjetivos)
+    comparative: {more:'ērf', equal:'fārd', less:'örf'}   // X ērf Y = mais que
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 7. NUMERAIS                                                         */
+  /* ------------------------------------------------------------------ */
+  var NUMERALS = {
+    ones:      ['uis','lus','esc','són','hicis','mas','yrus','nus','cáin','ruja'], // 0..9
+    combining: ['uis','us','esc','o','is','as','ys','ycs','in','uja'],            // 0..9 (formas de composição)
+    ten:'ni', hundred:'aun', thousand:'nun', zero:'uis',
+    ordinalSuffix:'nin',       // ordinal = numeral + nin
+    multiplySuffix:'au',       // multiplicação
+    divideSuffix:'af',         // divisão
+    // esquema de composição (regularizado, ver Mudancas.md):
+    //   dezenas 20-90 = combinante(n) + 'ni' ; 10 = 'ni'
+    //   centenas = combinante(n) + 'aun' ; 100 = 'aun'
+    //   milhares = combinante(n) + 'nun' ; 1000 = 'nun'
+    wordsPT: { // números por extenso em PT -> valor
+      'zero':0,'um':1,'uma':1,'dois':2,'duas':2,'tres':3,'três':3,'quatro':4,'cinco':5,
+      'seis':6,'sete':7,'oito':8,'nove':9,'dez':10,'onze':11,'doze':12,'treze':13,
+      'quatorze':14,'catorze':14,'quinze':15,'dezesseis':16,'dezessete':17,'dezoito':18,
+      'dezenove':19,'vinte':20,'trinta':30,'quarenta':40,'cinquenta':50,'sessenta':60,
+      'setenta':70,'oitenta':80,'noventa':90,'cem':100,'cento':100,'mil':1000
+    }
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 8. CALENDÁRIO, CORES, SAUDAÇÕES                                     */
+  /* ------------------------------------------------------------------ */
+  var MONTHS = { // 1..12
+    jan:'rádus', fev:'jádus', mar:'gaudus', abr:'sodus', mai:'ihdus', jun:'letus',
+    jul:'metus', ago:'ceadus', set:'fardus', out:'miádus', nov:'yhdus', dez:'ninus'
+  };
+  var WEEKDAYS = {
+    seg:'luseh', ter:'esceh', qua:'soreh', qui:'hicieh', sex:'maseh', sab:'yseh', dom:'njuseh'
+  };
+  var COLORS = { // cores canônicas (planilha "Cores")
+    'preto':'gáli','branco':'na','azul':'taiga','vermelho':'claunis','amarelo':'melo',
+    'verde':'jana','rosa':'lada','roxo':'midi','laranja':'jora'
+  };
+  var GREETINGS = {
+    'ola':'dómo','olá':'dómo','oi':'dómo','tchau':'mau','adeus':'rama',
+    'bom dia':'dómo cassa','boa noite':'dómo hoia','boa tarde':'dómo hoia',
+    'perdao':'euga','perdão':'euga','desculpa':'dus','desculpe':'dus',
+    'sem problema':'jate','de nada':'jate','pode me ajudar':'euga nero',
+    'boas vindas':'dómo lus','bem-vindo':'dómo lus','parabens':'ssitu','parabéns':'ssitu'
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* 9. PALAVRAS FUNCIONAIS (PT -> Ekhan)                                */
+  /* ------------------------------------------------------------------ */
+  var CONJUNCTIONS = {
+    'e':'ána','mas':'éra','porém':'éra','contudo':'éra','embora':'ihbin','apesar de':'ihbin',
+    'porque':'mei','pois':'mei','se':'ta','ou':'isc','como':'cáli','tal como':'cáli',
+    'para que':'laián','a fim de':'laián','portanto':'dah','logo':'dah','então':'dah',
+    'que':'ea'
+  };
+  var PREPOSITIONS = { // preposições sem caso próprio (as demais viram caso, ver CASES.prepCase)
+    'após':'issta','apos':'issta','depois de':'issta','até':'icis','ate':'icis',
+    'contra':'bau','sem':'hyt','desde':'yra','entre':'his','sobre':'pólis','acerca de':'pólis',
+    'exceto':'eutis','durante':'clas','de acordo com':'jis','conforme':'jis'
+  };
+  var ADVERBS = {
+    // lugar
+    'aqui':'lolia','cá':'lolia','ali':'mēu','lá':'mēu','la':'mēu','acima':'kati','em cima':'kati',
+    'abaixo':'ev','embaixo':'ev','do lado':'mulə','ao lado':'mulə','ao redor':'hez','em volta':'hez',
+    'perto':'hau','longe':'pūze','dentro':'áun',
+    // afirmação / negação / dúvida
+    'sim':'heia','não':'āmi','nao':'āmi','talvez':'ils','quiçá':'ils',
+    // intensidade
+    'muito':'auv','bastante':'auv','pouco':'lam','quase':'on',
+    // frequência
+    'sempre':'manas','nunca':'daf','jamais':'daf','às vezes':'aki','as vezes':'aki',
+    'raramente':'bea','geralmente':'gaenā','normalmente':'gaenā','de novo':'sanos','novamente':'sanos','uma vez':'oid',
+    // tempo
+    'agora':'eto','logo':'era','amanhã':'fata','amanha':'fata','hoje':'tulem','ontem':'tei',
+    'cedo':'komo','tarde':'otis','ainda':'mere','antes':'yanēm','depois':'rērr','semana':'giza',
+    // modo
+    'bem':'feán','melhor':'ess','pior':'veah','assim':'atín','depressa':'dáma','rápido':'dáma',
+    'devagar':'parén','lentamente':'parén','desse modo':'nitāma','apenas':'hitar','só':'hitar','somente':'hitar'
+  };
+  var INTERROGATIVES = {
+    'que':'ela','o que':'ela','como':'mis','quem':'menje','qual':'cae','quais':'cae',
+    'porque':'ass','por que':'ass','por quê':'ass','onde':'sin','aonde':'sin',
+    'quando':'cav','quanto':'ceula','quanta':'ceula','quantos':'ceula','quantas':'ceula'
+  };
+  var INDEFINITES = {
+    'outro':'águs','outra':'águs','outros':'águs','outras':'águs',
+    'tudo':'neach','todo':'mar','toda':'mar','todos':'mar','todas':'mar',
+    'alguém':'mus','alguem':'mus','ninguém':'uis','ninguem':'uis','nada':'uis','algo':'gaih',
+    'qualquer':'caess','nem':'zecht','mais':'nios','menos':'ar',
+    'isso':'frei','isto':'frei','aquilo':'asea','este':'sev','esse':'sev','esta':'sev','essa':'sev'
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* export                                                             */
+  /* ------------------------------------------------------------------ */
+  var G = {
+    PHONOLOGY: PHONOLOGY, PRONOUNS: PRONOUNS, CASES: CASES, ARTICLES: ARTICLES,
+    VERB: VERB, DERIVATION: DERIVATION, NUMERALS: NUMERALS, MONTHS: MONTHS,
+    WEEKDAYS: WEEKDAYS, COLORS: COLORS, GREETINGS: GREETINGS,
+    CONJUNCTIONS: CONJUNCTIONS, PREPOSITIONS: PREPOSITIONS, ADVERBS: ADVERBS,
+    INTERROGATIVES: INTERROGATIVES, INDEFINITES: INDEFINITES
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = G;
+  else root.EKHAN_GRAMMAR = G;
+})(typeof self !== 'undefined' ? self : this);
+/* ============================================================================
+   EKHAN — LÉXICO COMPLETO (ekhan-lexicon.js)
+   Dicionário de raízes do idioma Ekhan.
+   Cada entrada: { root, pos, cls, pt_n[], pt_v[], pt_adj[], etym, src?, note?, gloss }
+     root  = raiz na romanização Ekhan
+     pos   = classe(s): 'n' subst, 'v' verbo, 'adj' adjetivo, 'adv' advérbio (combináveis: 'vn')
+     cls   = classe de conjugação verbal: 'calum' (vogal a/o/u) ou 'sine' (vogal e/i)
+     pt_n/pt_v/pt_adj = glosas em português por categoria (usadas pelo tradutor)
+     etym  = 'nativo' | 'kartveli' (georgiano) | 'hayeren' (armênio)
+   Total de raízes: 599
+   ========================================================================== */
+(function (root) {
+  'use strict';
+  var ENTRIES = [
+    {"root": "mast", "pos": "vn", "cls": "calum", "pt_n": ["local", "lugar", "estado", "urso"], "pt_v": ["localizar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ait", "pos": "vn", "cls": "sine", "pt_n": ["humanidade", "ser"], "pt_v": ["estar", "fazer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ser", "pos": "n", "cls": "sine", "pt_n": ["ser humano"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ri", "pos": "vn", "cls": "sine", "pt_n": ["comida", "bebida", "comida", "bebida"], "pt_v": ["comer", "beber", "comer", "beber"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ma", "pos": "vn", "cls": "calum", "pt_n": ["amor"], "pt_v": ["amar", "gostar", "gostar", "amar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gaih", "pos": "n", "cls": "sine", "pt_n": ["coisa", "algo (informal)", "\"coisar\""], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "missa", "pos": "vn", "cls": "calum", "pt_n": ["fala"], "pt_v": ["falar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gauri", "pos": "vn", "cls": "sine", "pt_n": ["novidade"], "pt_v": ["inovar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "some", "pos": "vn", "cls": "sine", "pt_n": ["velhice"], "pt_v": ["envelhecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ásato", "pos": "vn", "cls": "calum", "pt_n": ["linguagem", "dialeto"], "pt_v": ["traduzir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "lisa", "pos": "vn", "cls": "calum", "pt_n": ["casa", "moradia"], "pt_v": ["morar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ega", "pos": "vn", "cls": "calum", "pt_n": ["mudança", "troca"], "pt_v": ["mudar", "trocar", "modificar", "modificar", "mudar", "trocar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fara", "pos": "vn", "cls": "calum", "pt_n": ["entendimento", "interpretação", "entendimento"], "pt_v": ["entender", "entender", "interpretar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "géra", "pos": "vn", "cls": "calum", "pt_n": ["tirador", "armário"], "pt_v": ["tirar", "retirar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "aize", "pos": "vn", "cls": "sine", "pt_n": ["fogo", "queima"], "pt_v": ["queimar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "hara", "pos": "vn", "cls": "calum", "pt_n": ["água"], "pt_v": ["molhar", "afogar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "meko", "pos": "vn", "cls": "calum", "pt_n": ["arte"], "pt_v": ["fazer arte"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nazo", "pos": "vn", "cls": "calum", "pt_n": ["continuação"], "pt_v": ["ficar", "continuar", "permanecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tela", "pos": "vn", "cls": "calum", "pt_n": ["conhecimento"], "pt_v": ["saber", "conhecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ráse", "pos": "vn", "cls": "sine", "pt_n": ["necessidade"], "pt_v": ["necessitar", "precisar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kuna", "pos": "vn", "cls": "calum", "pt_n": ["saída"], "pt_v": ["sair"], "pt_adj": [], "etym": "nativo"},
+    {"root": "louma", "pos": "vn", "cls": "calum", "pt_n": ["entrada"], "pt_v": ["entrar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "seve", "pos": "n", "cls": "sine", "pt_n": ["suposição", "supor", "chance", "possibilidade"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nati", "pos": "vn", "cls": "sine", "pt_n": ["parada"], "pt_v": ["parar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "cise", "pos": "vn", "cls": "sine", "pt_n": ["abandono"], "pt_v": ["abandonar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tago", "pos": "vn", "cls": "calum", "pt_n": ["morte", "morte"], "pt_v": ["morrer", "morrer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "zaha", "pos": "n", "cls": "calum", "pt_n": ["visão", "ver"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ina", "pos": "vn", "cls": "calum", "pt_n": ["subida", "algo alto", "altitude"], "pt_v": ["subir", "subir", "levantar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "néva", "pos": "vn", "cls": "calum", "pt_n": ["descida"], "pt_v": ["cair", "descer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "pári", "pos": "vn", "cls": "sine", "pt_n": ["culpa"], "pt_v": ["culpar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "do", "pos": "vn", "cls": "calum", "pt_n": ["dor"], "pt_v": ["doer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tuva", "pos": "vn", "cls": "calum", "pt_n": ["envio"], "pt_v": ["enviar", "mandar algo", "enviar", "mandar (send)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ssi", "pos": "vn", "cls": "sine", "pt_n": ["ordem"], "pt_v": ["ordenar", "mandar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mani", "pos": "vn", "cls": "sine", "pt_n": ["destruição"], "pt_v": ["destruir", "machucar", "bater", "destruir", "bater", "chutar", "socar", "danificar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "páhica", "pos": "vnadj", "cls": "calum", "pt_n": ["falta"], "pt_v": ["esvaziar", "faltar"], "pt_adj": ["vazio"], "etym": "nativo"},
+    {"root": "uris", "pos": "vn", "cls": "sine", "pt_n": ["genocídio", "matança", "assasinato"], "pt_v": ["matar", "assasinar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tána", "pos": "vn", "cls": "calum", "pt_n": ["enchente", "presença"], "pt_v": ["encher", "estar presente"], "pt_adj": [], "etym": "nativo"},
+    {"root": "roda", "pos": "vnadj", "cls": "calum", "pt_n": ["dignidade", "dignidade", "justiça", "ser justo"], "pt_v": ["indignecer", "indignecer", "tornar digno"], "pt_adj": ["digno"], "etym": "nativo"},
+    {"root": "naj", "pos": "vn", "cls": "calum", "pt_n": ["círculo", "roda"], "pt_v": ["rodar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "beunu", "pos": "n", "cls": "calum", "pt_n": ["quadrado"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "sita", "pos": "vnadj", "cls": "calum", "pt_n": ["pensamento", "razão", "consciência", "pensamento", "pensamento", "razão", "consciência", "ser consciente"], "pt_v": ["indignecer", "pensar", "pensar"], "pt_adj": ["digno"], "etym": "nativo"},
+    {"root": "yla", "pos": "vadj", "cls": "calum", "pt_n": [], "pt_v": ["engrandecer", "melhorar"], "pt_adj": ["grande"], "etym": "nativo"},
+    {"root": "yhan", "pos": "vadj", "cls": "calum", "pt_n": [], "pt_v": ["diminuir", "piorar"], "pt_adj": ["pequeno"], "etym": "nativo"},
+    {"root": "paza", "pos": "vn", "cls": "calum", "pt_n": ["cuidado"], "pt_v": ["cuidar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "siza", "pos": "vn", "cls": "calum", "pt_n": ["estudo", "ciência", "estudo", "ciência"], "pt_v": ["estudar", "estudar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nea", "pos": "vn", "cls": "calum", "pt_n": ["identificação", "nome", "identificação"], "pt_v": ["identificar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "éba", "pos": "vn", "cls": "calum", "pt_n": ["velocidade", "corrida"], "pt_v": ["correr"], "pt_adj": [], "etym": "nativo"},
+    {"root": "sáti", "pos": "n", "cls": "sine", "pt_n": ["lentidão", "ser lento"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "docu", "pos": "vn", "cls": "calum", "pt_n": ["demonstração"], "pt_v": ["mostrar", "demonstrar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "meni", "pos": "vn", "cls": "sine", "pt_n": ["liberdade"], "pt_v": ["libertar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mino", "pos": "vn", "cls": "calum", "pt_n": ["posse", "ter", "dotação", "munição", "portação", "ter", "ter"], "pt_v": ["deter", "possuir", "munir", "dotar", "possuir", "portar", "dotar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fe", "pos": "vn", "cls": "sine", "pt_n": ["caminho", "ir"], "pt_v": ["passar", "caminhar", "andar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ná", "pos": "vn", "cls": "calum", "pt_n": ["\"ligação\""], "pt_v": ["ligar", "acender"], "pt_adj": [], "etym": "nativo"},
+    {"root": "lu", "pos": "vn", "cls": "calum", "pt_n": ["ambição"], "pt_v": ["querer", "ambicionar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gáli", "pos": "vn", "cls": "sine", "pt_n": ["apagão"], "pt_v": ["apagar", "desligar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "neko", "pos": "vn", "cls": "calum", "pt_n": ["amizade"], "pt_v": ["amigar", "amigar", "fazer amigos"], "pt_adj": [], "etym": "nativo"},
+    {"root": "blia", "pos": "vn", "cls": "calum", "pt_n": ["existência"], "pt_v": ["existir", "haver"], "pt_adj": [], "etym": "nativo"},
+    {"root": "dívi", "pos": "vn", "cls": "sine", "pt_n": ["perfeição"], "pt_v": ["aperfeiçoar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "loha", "pos": "vn", "cls": "calum", "pt_n": ["calma", "saúde", "calma", "sanidade", "cura"], "pt_v": ["acalmar", "acalmar", "ficar são", "curar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "bace", "pos": "vn", "cls": "sine", "pt_n": ["agitação", "loucura"], "pt_v": ["agitar", "piorar saúde"], "pt_adj": [], "etym": "nativo"},
+    {"root": "coze", "pos": "vn", "cls": "sine", "pt_n": ["natação", "nado"], "pt_v": ["nadar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "uza", "pos": "vn", "cls": "calum", "pt_n": ["maldição", "magia"], "pt_v": ["amaldiçoar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "sega", "pos": "vn", "cls": "calum", "pt_n": ["validação"], "pt_v": ["lidar", "validar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "noro", "pos": "vn", "cls": "calum", "pt_n": ["ouvido"], "pt_v": ["ouvir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "daga", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["trazer", "levar", "trazer", "levar (local)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mé", "pos": "vn", "cls": "sine", "pt_n": ["ocasião"], "pt_v": ["levar a algo", "ocasionar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "vida", "pos": "vnadj", "cls": "calum", "pt_n": ["prova", "confirmação", "prova", "confirmação", "verdade"], "pt_v": ["provar", "confirmar"], "pt_adj": ["correto"], "etym": "nativo"},
+    {"root": "cali", "pos": "vn", "cls": "sine", "pt_n": ["mentira"], "pt_v": ["mentir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gámi", "pos": "vn", "cls": "sine", "pt_n": ["dobra"], "pt_v": ["dobrar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "máge", "pos": "vn", "cls": "sine", "pt_n": ["escritura"], "pt_v": ["escrever"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tóna", "pos": "n", "cls": "calum", "pt_n": ["risada", "rir"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "lassa", "pos": "vn", "cls": "calum", "pt_n": ["tristeza"], "pt_v": ["entristecer", "ficar triste", "entristecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "scaha", "pos": "vn", "cls": "calum", "pt_n": ["choro"], "pt_v": ["chorar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ssyne", "pos": "vn", "cls": "sine", "pt_n": ["experiência", "sentimento"], "pt_v": ["sentir", "experienciar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fíta", "pos": "vn", "cls": "calum", "pt_n": ["tempo", "espera"], "pt_v": ["esperar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "saca", "pos": "vn", "cls": "calum", "pt_n": ["limpeza"], "pt_v": ["limpar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "simo", "pos": "vn", "cls": "calum", "pt_n": ["vergonha"], "pt_v": ["envergonhar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "a", "pos": "vn", "cls": "calum", "pt_n": ["ser", "ação", "ser"], "pt_v": ["fazer", "tomar", "estar", "fazer", "tomar ação", "estar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "li", "pos": "n", "cls": "sine", "pt_n": ["surgimento", "nascimento", "origem"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "te", "pos": "n", "cls": "sine", "pt_n": ["humanidade", "humanidade", "pessoas", "ser pessoa", "ser humano"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hava", "pos": "n", "cls": "calum", "pt_n": ["igualdade", "equidade", "igualdade", "equidade"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "doku", "pos": "vn", "cls": "calum", "pt_n": ["show", "exibição"], "pt_v": ["mostrar", "mostrar", "demonstrar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mavana", "pos": "n", "cls": "calum", "pt_n": ["química"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kavana", "pos": "n", "cls": "calum", "pt_n": ["física"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "za", "pos": "vn", "cls": "calum", "pt_n": ["ambição"], "pt_v": ["querer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "āna", "pos": "n", "cls": "calum", "pt_n": ["ano", "anual"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "rati", "pos": "n", "cls": "sine", "pt_n": ["árvores", "floresta", "meio ambiente"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "koba", "pos": "vn", "cls": "calum", "pt_n": ["existência"], "pt_v": ["haver", "existir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kaša", "pos": "vn", "cls": "calum", "pt_n": ["lua"], "pt_v": ["lunar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "pahika", "pos": "nadj", "cls": "calum", "pt_n": ["buraco", "espaço livre"], "pt_v": [], "pt_adj": ["vazio"], "etym": "nativo"},
+    {"root": "nā", "pos": "vnadj", "cls": "calum", "pt_n": ["luz"], "pt_v": ["acender", "ligar", "enbranquecer"], "pt_adj": ["aceso", "positivo", "branco"], "etym": "nativo"},
+    {"root": "gāli", "pos": "vnadj", "cls": "sine", "pt_n": ["sem luz"], "pt_v": ["apagar", "desligar", "enegrecer"], "pt_adj": ["apagado", "negativo", "preto", "negro"], "etym": "nativo"},
+    {"root": "cany", "pos": "vadj", "cls": "calum", "pt_n": [], "pt_v": ["engrandecer", "tornar importante", "melhorar"], "pt_adj": ["grande", "importante", "grande", "bom"], "etym": "nativo"},
+    {"root": "fē", "pos": "vn", "cls": "sine", "pt_n": ["ir", "caminho", "jornada", "ir"], "pt_v": ["passar", "passar", "caminhar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nēva", "pos": "vn", "cls": "calum", "pt_n": ["algo baixo", "\"baixitude\""], "pt_v": ["descer", "abaixar", "cair"], "pt_adj": [], "etym": "nativo"},
+    {"root": "miša", "pos": "vn", "cls": "calum", "pt_n": ["fala", "boca"], "pt_v": ["dizer", "falar", "dizer", "contar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "logo", "pos": "n", "cls": "calum", "pt_n": ["coração"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "minə", "pos": "n", "cls": "sine", "pt_n": ["lugar"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gaix", "pos": "n", "cls": "sine", "pt_n": ["coisa/parada"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gare", "pos": "vadj", "cls": "sine", "pt_n": [], "pt_v": ["rejuvenescer"], "pt_adj": ["novo"], "etym": "nativo"},
+    {"root": "taiga", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["azul"], "etym": "nativo"},
+    {"root": "sedāma", "pos": "n", "cls": "calum", "pt_n": ["maracujá"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nathi", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["parar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "melo", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["amarelo"], "etym": "nativo"},
+    {"root": "āsato", "pos": "n", "cls": "calum", "pt_n": ["linguagem"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gāna", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["verde"], "etym": "nativo"},
+    {"root": "təra", "pos": "n", "cls": "calum", "pt_n": ["casa"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gēra", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["retirar", "tomar", "tirar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "lada", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["rosa"], "etym": "nativo"},
+    {"root": "medi", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["roxo"], "etym": "nativo"},
+    {"root": "dasa", "pos": "n", "cls": "calum", "pt_n": ["tempo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "yōra", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["laranja"], "etym": "nativo"},
+    {"root": "lōma", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["entrar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ab", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["vermelho"], "etym": "nativo"},
+    {"root": "ēha", "pos": "n", "cls": "calum", "pt_n": ["solidão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "koze", "pos": "n", "cls": "sine", "pt_n": ["mar", "oceano"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "yaki", "pos": "n", "cls": "sine", "pt_n": ["terra"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "zarra", "pos": "vn", "cls": "calum", "pt_n": ["olho", "ver"], "pt_v": ["enxergar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "pāri", "pos": "vn", "cls": "sine", "pt_n": ["culpa"], "pt_v": ["culpar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "rāse", "pos": "vadj", "cls": "sine", "pt_n": [], "pt_v": ["precisar", "necessitar"], "pt_adj": ["suficiente", "necessário"], "etym": "nativo"},
+    {"root": "māge", "pos": "vn", "cls": "sine", "pt_n": ["livro", "escritura", "caderno"], "pt_v": ["escrever"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nəd", "pos": "n", "cls": "sine", "pt_n": ["banana"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "donā", "pos": "n", "cls": "calum", "pt_n": ["céu"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mosa", "pos": "n", "cls": "calum", "pt_n": ["goiaba"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "āreze", "pos": "n", "cls": "sine", "pt_n": ["cachorro"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ši", "pos": "vn", "cls": "sine", "pt_n": ["ordem"], "pt_v": ["ordenar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "agouna", "pos": "n", "cls": "calum", "pt_n": ["trem"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ēba", "pos": "n", "cls": "calum", "pt_n": ["velocidade", "ser rápido"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hōia", "pos": "vn", "cls": "calum", "pt_n": ["sol"], "pt_v": ["amanhecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "sāti", "pos": "n", "cls": "sine", "pt_n": ["lentidão", "ser lento"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "səts", "pos": "n", "cls": "sine", "pt_n": ["ironia"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ho", "pos": "n", "cls": "calum", "pt_n": ["beleza"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "zōda", "pos": "vn", "cls": "calum", "pt_n": ["chuva"], "pt_v": ["chover"], "pt_adj": [], "etym": "nativo"},
+    {"root": "zīdi", "pos": "n", "cls": "sine", "pt_n": ["feiura"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "sagaho", "pos": "n", "cls": "calum", "pt_n": ["biologia"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "taia", "pos": "n", "cls": "calum", "pt_n": ["ar"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "vorra kūlatamo", "pos": "n", "cls": "calum", "pt_n": ["matemática (sistema de números)"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "pərika", "pos": "nadj", "cls": "calum", "pt_n": ["falta"], "pt_v": [], "pt_adj": ["vazio"], "etym": "nativo"},
+    {"root": "zeg", "pos": "n", "cls": "sine", "pt_n": ["quarto"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tāna", "pos": "vnadj", "cls": "calum", "pt_n": ["lotação", "presença"], "pt_v": ["encher", "estar presente"], "pt_adj": ["cheio"], "etym": "nativo"},
+    {"root": "aeg", "pos": "n", "cls": "sine", "pt_n": ["pássaro"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "pahica", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["esvaziar", "faltar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "savi", "pos": "vn", "cls": "sine", "pt_n": ["cozinha", "preparo"], "pt_v": ["cozinhar", "preparar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "panemist", "pos": "n", "cls": "sine", "pt_n": ["banheiro"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kavist", "pos": "n", "cls": "sine", "pt_n": ["arroz"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "any", "pos": "vadj", "cls": "calum", "pt_n": [], "pt_v": ["diminuir", "piorar"], "pt_adj": ["pequeno", "ruim"], "etym": "nativo"},
+    {"root": "mist", "pos": "n", "cls": "sine", "pt_n": ["campo", "planície"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kust", "pos": "n", "cls": "calum", "pt_n": ["escada"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "passt", "pos": "n", "cls": "calum", "pt_n": ["peixe"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "erst", "pos": "n", "cls": "sine", "pt_n": ["pão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "yarst", "pos": "n", "cls": "calum", "pt_n": ["morango"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ōrv", "pos": "n", "cls": "calum", "pt_n": ["alface"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nits", "pos": "n", "cls": "sine", "pt_n": ["feijão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "muotas", "pos": "n", "cls": "calum", "pt_n": ["tomate"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "garəba", "pos": "n", "cls": "calum", "pt_n": ["beringela"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tōmina", "pos": "n", "cls": "calum", "pt_n": ["pimentão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kolia", "pos": "n", "cls": "calum", "pt_n": ["brócolis"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "fāmis", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["laranja"], "etym": "nativo"},
+    {"root": "mata", "pos": "n", "cls": "calum", "pt_n": ["família", "parentes"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tōga", "pos": "n", "cls": "calum", "pt_n": ["maçã"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mēg", "pos": "n", "cls": "sine", "pt_n": ["uva"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kotūsu", "pos": "n", "cls": "calum", "pt_n": ["manga"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "pia", "pos": "n", "cls": "calum", "pt_n": ["porta"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "dīvi", "pos": "vn", "cls": "sine", "pt_n": ["perfeição"], "pt_v": ["aperfeiçoar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "monaza", "pos": "n", "cls": "calum", "pt_n": ["prateleira"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "öm", "pos": "n", "cls": "calum", "pt_n": ["gelo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "bakə", "pos": "vn", "cls": "sine", "pt_n": ["loucura", "doença", "agitação"], "pt_v": ["agitar", "enlouquecer", "ficar mal de saúde"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gudam ömo", "pos": "n", "cls": "calum", "pt_n": ["geladeira"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ūza", "pos": "vn", "cls": "calum", "pt_n": ["magia", "maldição"], "pt_v": ["amaldiçoar", "tornar mágico"], "pt_adj": [], "etym": "nativo"},
+    {"root": "šesa", "pos": "n", "cls": "calum", "pt_n": ["mochila", "sacola"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ākami", "pos": "n", "cls": "sine", "pt_n": ["armário"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kanag", "pos": "n", "cls": "calum", "pt_n": ["escola"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kali", "pos": "n", "cls": "sine", "pt_n": ["mentira"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "miad", "pos": "n", "cls": "calum", "pt_n": ["chocolate"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gāmi", "pos": "vn", "cls": "sine", "pt_n": ["dobra"], "pt_v": ["dobrar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "uzad", "pos": "n", "cls": "calum", "pt_n": ["sorvete"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tōna", "pos": "n", "cls": "calum", "pt_n": ["risada", "engraçado", "rir"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mōve", "pos": "n", "cls": "sine", "pt_n": ["carne"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "səga", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["lidar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "livana", "pos": "n", "cls": "calum", "pt_n": ["tristeza"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gazoi", "pos": "n", "cls": "sine", "pt_n": ["queijo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "larra", "pos": "vn", "cls": "calum", "pt_n": ["choro"], "pt_v": ["chorar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mōi", "pos": "n", "cls": "sine", "pt_n": ["ovo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kašene", "pos": "vn", "cls": "sine", "pt_n": ["sentimento", "experiência"], "pt_v": ["sentir", "experienciar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "zūkoi", "pos": "n", "cls": "sine", "pt_n": ["macarrão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mə", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["ocasionar", "levar (a algo)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fita", "pos": "vn", "cls": "calum", "pt_n": ["esperança"], "pt_v": ["esperar (tempo)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "əis", "pos": "n", "cls": "sine", "pt_n": ["suco"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "saka", "pos": "vn", "cls": "calum", "pt_n": ["limpeza"], "pt_v": ["limpar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nāmo", "pos": "n", "cls": "calum", "pt_n": ["leite"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mago", "pos": "vn", "cls": "calum", "pt_n": ["sujeira"], "pt_v": ["sujar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kos", "pos": "n", "cls": "calum", "pt_n": ["café"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "məga", "pos": "vn", "cls": "calum", "pt_n": ["algo muito quente", "calor"], "pt_v": ["esquentar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nusta", "pos": "n", "cls": "calum", "pt_n": ["bolo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "pozo", "pos": "vn", "cls": "calum", "pt_n": ["algo muito frio"], "pt_v": ["esfriar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "usis", "pos": "n", "cls": "sine", "pt_n": ["melancia"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hanou", "pos": "n", "cls": "calum", "pt_n": ["cenoura"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tu", "pos": "vn", "cls": "calum", "pt_n": ["medo"], "pt_v": ["amedrontar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "šate", "pos": "vn", "cls": "sine", "pt_n": ["sorriso"], "pt_v": ["sorrir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "āga", "pos": "n", "cls": "calum", "pt_n": ["vaca"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hatə", "pos": "vn", "cls": "sine", "pt_n": ["barulho"], "pt_v": ["gritar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nūd", "pos": "n", "cls": "calum", "pt_n": ["gato"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "foma", "pos": "vn", "cls": "calum", "pt_n": ["silêncio"], "pt_v": ["silenciar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "minust", "pos": "n", "cls": "calum", "pt_n": ["elefante"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "āgo", "pos": "n", "cls": "calum", "pt_n": ["som"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "toa", "pos": "n", "cls": "calum", "pt_n": ["sapo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "velo", "pos": "n", "cls": "calum", "pt_n": ["animal"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "meloa", "pos": "n", "cls": "calum", "pt_n": ["leão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nigo", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["pegar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "māpis", "pos": "n", "cls": "sine", "pt_n": ["cavalo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ōvena", "pos": "vn", "cls": "calum", "pt_n": ["doçura"], "pt_v": ["adoçar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ōkov", "pos": "n", "cls": "calum", "pt_n": ["tartaruga"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "totala", "pos": "vn", "cls": "calum", "pt_n": ["amargor/azedo"], "pt_v": ["amargar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mirov", "pos": "n", "cls": "calum", "pt_n": ["polvo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "yaši", "pos": "vadj", "cls": "sine", "pt_n": [], "pt_v": ["salgar"], "pt_adj": ["salgado"], "etym": "nativo"},
+    {"root": "saganə", "pos": "n", "cls": "sine", "pt_n": ["macaco"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tēne", "pos": "vn", "cls": "sine", "pt_n": ["alegria", "felicidade"], "pt_v": ["prazer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "seboma", "pos": "n", "cls": "calum", "pt_n": ["coruja"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "muta", "pos": "vn", "cls": "calum", "pt_n": ["alerta"], "pt_v": ["alertar", "avisar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kamast", "pos": "n", "cls": "calum", "pt_n": ["girafa"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nāta", "pos": "n", "cls": "calum", "pt_n": ["dinheiro"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nāke", "pos": "n", "cls": "sine", "pt_n": ["pinguim"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gemo", "pos": "n", "cls": "calum", "pt_n": ["pobreza"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nāle", "pos": "n", "cls": "sine", "pt_n": ["galinha"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "šeto", "pos": "vn", "cls": "calum", "pt_n": ["riqueza"], "pt_v": ["enriquecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mōd", "pos": "n", "cls": "calum", "pt_n": ["abelha"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hōle", "pos": "vn", "cls": "sine", "pt_n": ["início", "começo"], "pt_v": ["começar", "iniciar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "yusud", "pos": "n", "cls": "calum", "pt_n": ["cobra"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "neuttu", "pos": "vn", "cls": "calum", "pt_n": ["fim", "término"], "pt_v": ["terminar", "acabar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mainax", "pos": "n", "cls": "calum", "pt_n": ["rato"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "atēne", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["alegrar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fahax", "pos": "n", "cls": "calum", "pt_n": ["formiga"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "miga", "pos": "vadj", "cls": "calum", "pt_n": [], "pt_v": ["completar"], "pt_adj": ["completo"], "etym": "nativo"},
+    {"root": "pole", "pos": "n", "cls": "sine", "pt_n": ["mão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "vizo", "pos": "vn", "cls": "calum", "pt_n": ["colapso"], "pt_v": ["colapsar", "desmoronar", "fracassar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "aiga", "pos": "n", "cls": "calum", "pt_n": ["esqueleto"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "vorra", "pos": "vn", "cls": "calum", "pt_n": ["sistema", "código", "programa"], "pt_v": ["sistematizar", "programar", "codificar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "outa", "pos": "n", "cls": "calum", "pt_n": ["pé"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "habe", "pos": "vn", "cls": "sine", "pt_n": ["susto"], "pt_v": ["assustar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "āmo", "pos": "n", "cls": "calum", "pt_n": ["parte"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "girra", "pos": "n", "cls": "calum", "pt_n": ["braço"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "moka", "pos": "vn", "cls": "calum", "pt_n": ["divisão", "separacao"], "pt_v": ["dividir", "separar", "partir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mərre", "pos": "n", "cls": "sine", "pt_n": ["perna"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tāso", "pos": "vn", "cls": "calum", "pt_n": ["soma", "juncao"], "pt_v": ["juntar", "somar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ēne", "pos": "n", "cls": "sine", "pt_n": ["cabelo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "selene", "pos": "vn", "cls": "sine", "pt_n": ["ciclo", "giro", "dar voltas"], "pt_v": ["ciclar", "girar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nota", "pos": "n", "cls": "calum", "pt_n": ["articulação"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "zāni", "pos": "n", "cls": "sine", "pt_n": ["extremo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tiza", "pos": "n", "cls": "calum", "pt_n": ["genital"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "paneme", "pos": "vn", "cls": "sine", "pt_n": ["xixi", "bosta", "necessidades"], "pt_v": ["mijar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "bāsi", "pos": "n", "cls": "sine", "pt_n": ["centro"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "pāga", "pos": "n", "cls": "calum", "pt_n": ["ânus", "cu"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "keha", "pos": "vn", "cls": "calum", "pt_n": ["facilidade"], "pt_v": ["facilitar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "zinos", "pos": "n", "cls": "calum", "pt_n": ["morro", "montanha"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ūno", "pos": "vn", "cls": "calum", "pt_n": ["ilusão", "enganação"], "pt_v": ["fingir", "enganar", "iludir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "homa", "pos": "vn", "cls": "calum", "pt_n": ["dificuldade"], "pt_v": ["dificultar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nuari", "pos": "n", "cls": "sine", "pt_n": ["chapéu"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tude", "pos": "vn", "cls": "sine", "pt_n": ["dúvida"], "pt_v": ["duvidar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ēlena", "pos": "vn", "cls": "calum", "pt_n": ["flor"], "pt_v": ["florecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "lunə", "pos": "vn", "cls": "sine", "pt_n": ["vitória"], "pt_v": ["ganhar", "vencer", "derrotar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "māle", "pos": "vn", "cls": "sine", "pt_n": ["confiança"], "pt_v": ["confiar", "esperar", "contar", "acreditar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "sukos", "pos": "n", "cls": "calum", "pt_n": ["faca"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "lāme", "pos": "vn", "cls": "sine", "pt_n": ["brincadeira"], "pt_v": ["brincar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "lana", "pos": "vn", "cls": "calum", "pt_n": ["fuga"], "pt_v": ["fugir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "dois", "pos": "n", "cls": "sine", "pt_n": ["dedo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mura", "pos": "vn", "cls": "calum", "pt_n": ["ódio"], "pt_v": ["odiar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mois", "pos": "n", "cls": "sine", "pt_n": ["telefone"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ēlu", "pos": "vn", "cls": "calum", "pt_n": ["inveja"], "pt_v": ["invejar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "pois", "pos": "n", "cls": "sine", "pt_n": ["mapa"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hōgi", "pos": "n", "cls": "sine", "pt_n": ["crueldade"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kūav", "pos": "n", "cls": "calum", "pt_n": ["mensagem"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "pani", "pos": "vn", "cls": "sine", "pt_n": ["força"], "pt_v": ["ficar forte"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kūlata", "pos": "vn", "cls": "calum", "pt_n": ["número"], "pt_v": ["contar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "ēgano", "pos": "vn", "cls": "calum", "pt_n": ["assalto", "roubo"], "pt_v": ["roubar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "pino", "pos": "vn", "cls": "calum", "pt_n": ["disposição"], "pt_v": ["acordar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "noti", "pos": "vn", "cls": "sine", "pt_n": ["trabalho"], "pt_v": ["trabalhar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "īnea", "pos": "n", "cls": "calum", "pt_n": ["roupa"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "āru", "pos": "vn", "cls": "calum", "pt_n": ["beijo"], "pt_v": ["beijar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "rēde", "pos": "n", "cls": "sine", "pt_n": ["sapato"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mīli", "pos": "vn", "cls": "sine", "pt_n": ["vida"], "pt_v": ["viver", "sobreviver"], "pt_adj": [], "etym": "nativo"},
+    {"root": "linə", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["procurar", "achar", "procurar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "sēmag", "pos": "n", "cls": "calum", "pt_n": ["portal"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "heki", "pos": "vn", "cls": "sine", "pt_n": ["aperto"], "pt_v": ["apertar", "amassar", "segurar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "vilarə", "pos": "n", "cls": "sine", "pt_n": ["pessoa desconhecida"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "sēra", "pos": "vn", "cls": "calum", "pt_n": ["fraqueza"], "pt_v": ["enfraquecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "vinūs", "pos": "n", "cls": "calum", "pt_n": ["palavra"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "sofi", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["climatizar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "egāna", "pos": "vn", "cls": "calum", "pt_n": ["raça", "classe", "categoria", "tipo"], "pt_v": ["categorizar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "barra", "pos": "n", "cls": "calum", "pt_n": ["escudo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "dīce", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["afetar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "aia", "pos": "vadj", "cls": "calum", "pt_n": [], "pt_v": ["mulher"], "pt_adj": ["feminino"], "etym": "nativo"},
+    {"root": "ritham", "pos": "n", "cls": "calum", "pt_n": ["intro", "abertura"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mass", "pos": "n", "cls": "calum", "pt_n": ["sentido (sense)"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "məbe", "pos": "n", "cls": "sine", "pt_n": ["sonho (bom ou ruim)"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "esta", "pos": "nadj", "cls": "calum", "pt_n": ["homem"], "pt_v": [], "pt_adj": ["masculino"], "etym": "nativo"},
+    {"root": "gudam", "pos": "n", "cls": "calum", "pt_n": ["máquina"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nios", "pos": "n", "cls": "calum", "pt_n": ["direção"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ōma", "pos": "vn", "cls": "calum", "pt_n": ["derrota"], "pt_v": ["perder"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kios", "pos": "n", "cls": "calum", "pt_n": ["janela"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kalu", "pos": "n", "cls": "calum", "pt_n": ["inferno"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ceuv", "pos": "nadj", "cls": "calum", "pt_n": ["diferença"], "pt_v": [], "pt_adj": ["diferente"], "etym": "nativo"},
+    {"root": "mori", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["sonhar (pesadelo ou sonho)", "imaginar", "achar (think)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kīsa", "pos": "vn", "cls": "calum", "pt_n": ["sexo"], "pt_v": ["transar", "fazer sexo"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kax", "pos": "nadj", "cls": "calum", "pt_n": ["inutilidade"], "pt_v": [], "pt_adj": ["indiferente"], "etym": "nativo"},
+    {"root": "dāve", "pos": "n", "cls": "sine", "pt_n": ["fofura"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gurax", "pos": "n", "cls": "calum", "pt_n": ["borboleta"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "leme", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["esquerda"], "etym": "nativo"},
+    {"root": "ithuri", "pos": "n", "cls": "sine", "pt_n": ["arma"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "sota", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["direita"], "etym": "nativo"},
+    {"root": "bag", "pos": "n", "cls": "calum", "pt_n": ["forma"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "rāgi", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["errado"], "etym": "nativo"},
+    {"root": "gei", "pos": "n", "cls": "sine", "pt_n": ["medalha", "condecoração"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gīme", "pos": "vn", "cls": "sine", "pt_n": ["urgência"], "pt_v": ["urgir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "iusio", "pos": "n", "cls": "calum", "pt_n": ["héroi"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "neiava", "pos": "vn", "cls": "calum", "pt_n": ["inclusão", "adição"], "pt_v": ["incluir", "adicionar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mōso", "pos": "n", "cls": "calum", "pt_n": ["vilão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "masio", "pos": "n", "cls": "calum", "pt_n": ["pato"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kalost", "pos": "n", "cls": "calum", "pt_n": ["arco"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ēgst", "pos": "n", "cls": "sine", "pt_n": ["cajado", "varinha"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kassa", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["anoitecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gēmax", "pos": "n", "cls": "calum", "pt_n": ["espada"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "muzi", "pos": "vn", "cls": "sine", "pt_n": ["vapor"], "pt_v": ["evaporar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "simast", "pos": "n", "cls": "calum", "pt_n": ["filosofia"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kivo", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["sólido"], "etym": "nativo"},
+    {"root": "vogst", "pos": "n", "cls": "calum", "pt_n": ["torre"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tana", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["respirar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tunə", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["liquido"], "etym": "nativo"},
+    {"root": "kəte", "pos": "n", "cls": "sine", "pt_n": ["filho"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mafalə", "pos": "n", "cls": "sine", "pt_n": ["medicina"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "daoši", "pos": "n", "cls": "sine", "pt_n": ["ponte"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ragi", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["errar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gahi", "pos": "vn", "cls": "sine", "pt_n": ["dança"], "pt_v": ["dançar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "yābo", "pos": "n", "cls": "calum", "pt_n": ["legado"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "miki", "pos": "n", "cls": "sine", "pt_n": ["sorte"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "yurv", "pos": "n", "cls": "calum", "pt_n": ["pai", "mãe"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "sina", "pos": "n", "cls": "calum", "pt_n": ["azar"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "milim", "pos": "n", "cls": "sine", "pt_n": ["mídia", "televisao"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "paro", "pos": "vn", "cls": "calum", "pt_n": ["explosão"], "pt_v": ["explodir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fírun", "pos": "n", "cls": "calum", "pt_n": ["exercito"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "fāna", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["conseguir", "poder"], "pt_adj": [], "etym": "nativo"},
+    {"root": "eita", "pos": "n", "cls": "calum", "pt_n": ["aldeia", "cidade"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "naiva", "pos": "n", "cls": "calum", "pt_n": ["sul"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "tseda", "pos": "n", "cls": "calum", "pt_n": ["lembra"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "paiva", "pos": "n", "cls": "calum", "pt_n": ["norte"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kurs", "pos": "n", "cls": "calum", "pt_n": ["oeste"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "īka", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["durar", "resistir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "deg", "pos": "n", "cls": "sine", "pt_n": ["leste"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "pāvi", "pos": "n", "cls": "sine", "pt_n": ["mundo", "planeta"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "zāna", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["criar", "construir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "renēva", "pos": "n", "cls": "calum", "pt_n": ["planta"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "va", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["usar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "taho", "pos": "vn", "cls": "calum", "pt_n": ["voo"], "pt_v": ["voar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mie", "pos": "n", "cls": "sine", "pt_n": ["deus", "divindade"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "liani", "pos": "n", "cls": "sine", "pt_n": ["religião"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nero", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ajudar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "toia", "pos": "n", "cls": "calum", "pt_n": ["segredo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "risa", "pos": "vn", "cls": "calum", "pt_n": ["sob alcance"], "pt_v": ["alcançar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "alia", "pos": "n", "cls": "calum", "pt_n": ["fada"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ageru", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["extender"], "pt_adj": [], "etym": "nativo"},
+    {"root": "mix", "pos": "n", "cls": "sine", "pt_n": ["guerra"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "maru", "pos": "vn", "cls": "calum", "pt_n": ["sono"], "pt_v": ["dormir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "vazi", "pos": "n", "cls": "sine", "pt_n": ["defesa"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "setsu", "pos": "vn", "cls": "calum", "pt_n": ["escolha", "decisão"], "pt_v": ["decidir", "escolher"], "pt_adj": [], "etym": "nativo"},
+    {"root": "seabe", "pos": "n", "cls": "sine", "pt_n": ["sombra"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nāhe", "pos": "vn", "cls": "sine", "pt_n": ["salvação"], "pt_v": ["salvar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "natha", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["reclamar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "alə", "pos": "vn", "cls": "sine", "pt_n": ["remédio", "droga"], "pt_v": ["drogar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "šaha", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["chegar (come)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "paist", "pos": "n", "cls": "sine", "pt_n": ["história"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kəva", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["desistir"], "pt_adj": [], "etym": "nativo"},
+    {"root": "lānita", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["perguntar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "igāma", "pos": "vn", "cls": "calum", "pt_n": ["resposta"], "pt_v": ["responder"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fathas", "pos": "n", "cls": "calum", "pt_n": ["estrela"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "rena", "pos": "vn", "cls": "calum", "pt_n": ["votação"], "pt_v": ["votar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "lagia", "pos": "n", "cls": "calum", "pt_n": ["seção", "subdivisão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ēmo", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["tentar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "aupāta", "pos": "n", "cls": "calum", "pt_n": ["conto-de-fadas", "paraíso"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "kula", "pos": "vn", "cls": "calum", "pt_n": ["picada"], "pt_v": ["picar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "midi", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["divertir", "entreter", "jogar (play)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "cenāma", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["funcionar (dar certo)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "gahara", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["funcionar (estar dando certo)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "cira", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["perturbar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "puna", "pos": "vn", "cls": "calum", "pt_n": ["ter certeza"], "pt_v": ["estar certo"], "pt_adj": [], "etym": "nativo"},
+    {"root": "hluthi", "pos": "n", "cls": "sine", "pt_n": ["vídeo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "sada", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ignorar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "kodarə", "pos": "n", "cls": "sine", "pt_n": ["foto"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ga", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["parecer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "hīgal", "pos": "n", "cls": "calum", "pt_n": ["paz", "conforto"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "gati", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["deixar (let)"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tyse", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["ocorrer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nīk", "pos": "n", "cls": "sine", "pt_n": ["elfo"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hiwse", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["comprar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "hləa", "pos": "n", "cls": "calum", "pt_n": ["namoro", "relacionamento"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "dula", "pos": "n", "cls": "calum", "pt_n": ["taxa", "imposto"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "huru", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["crescer"], "pt_adj": [], "etym": "nativo"},
+    {"root": "nor", "pos": "n", "cls": "calum", "pt_n": ["bandeira"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "daro", "pos": "n", "cls": "calum", "pt_n": ["fama"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "moso", "pos": "n", "cls": "calum", "pt_n": ["rede"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mosta", "pos": "n", "cls": "calum", "pt_n": ["folha(de arvore)"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "rege", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["receber"], "pt_adj": [], "etym": "nativo"},
+    {"root": "tosci", "pos": "n", "cls": "sine", "pt_n": ["oficial"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "vissna", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["transplantar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "sénat", "pos": "n", "cls": "calum", "pt_n": ["homenagem"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "blaibe", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["afastar", "alienar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "fepena", "pos": "n", "cls": "calum", "pt_n": ["rim"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hausi", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["aproximar"], "pt_adj": [], "etym": "nativo"},
+    {"root": "loizi", "pos": "n", "cls": "sine", "pt_n": ["porco"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "ajif", "pos": "n", "cls": "sine", "pt_n": ["cirurgia"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "noiva", "pos": "n", "cls": "calum", "pt_n": ["essencialidade"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "alen", "pos": "n", "cls": "sine", "pt_n": ["pintura"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "buwt", "pos": "n", "cls": "calum", "pt_n": ["escravidão"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "flani", "pos": "n", "cls": "sine", "pt_n": ["revolução"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "fable", "pos": "n", "cls": "sine", "pt_n": ["estruturação"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "héni", "pos": "n", "cls": "sine", "pt_n": ["estranheza"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "hege", "pos": "n", "cls": "sine", "pt_n": ["presente"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "nita", "pos": "n", "cls": "calum", "pt_n": ["passado"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "vidia", "pos": "n", "cls": "calum", "pt_n": ["futuro"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "joha", "pos": "n", "cls": "calum", "pt_n": ["carinho", "massagem"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "mirca", "pos": "n", "cls": "calum", "pt_n": ["mercado"], "pt_v": [], "pt_adj": [], "etym": "nativo"},
+    {"root": "fuhnu", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["perceber"], "pt_adj": [], "etym": "nativo"},
+    {"root": "toty", "pos": "vn", "cls": "calum", "pt_n": ["dívida"], "pt_v": ["dever"], "pt_adj": [], "etym": "nativo"},
+    {"root": "meze", "pos": "n", "cls": "sine", "pt_n": ["sol"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მზე mze", "note": "dublê poético de hōia"},
+    {"root": "tavare", "pos": "n", "cls": "sine", "pt_n": ["lua"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მთვარე mtvare", "note": "dublê de kaša"},
+    {"root": "dinare", "pos": "n", "cls": "sine", "pt_n": ["rio", "corrente"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მდინარე mdinare"},
+    {"root": "sesli", "pos": "n", "cls": "sine", "pt_n": ["chama", "fogo"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ცეცხლი tsetskhli", "note": "dublê de aize"},
+    {"root": "geza", "pos": "n", "cls": "calum", "pt_n": ["estrada", "via", "caminho"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "გზა gza"},
+    {"root": "kava", "pos": "n", "cls": "calum", "pt_n": ["pedra", "rocha"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ქვა kva", "note": "NOVO: sem raiz nativa"},
+    {"root": "meta", "pos": "n", "cls": "calum", "pt_n": ["montanha", "serra"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მთა mta", "note": "dublê de zinos (morro)"},
+    {"root": "zguva", "pos": "n", "cls": "calum", "pt_n": ["mar", "oceano"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ზღვა zghva", "note": "dublê de koze"},
+    {"root": "game", "pos": "n", "cls": "sine", "pt_n": ["noite"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ღამე ghame"},
+    {"root": "dege", "pos": "n", "cls": "sine", "pt_n": ["dia"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "დღე dghe"},
+    {"root": "kari", "pos": "n", "cls": "sine", "pt_n": ["vento"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ქარი kari", "note": "NOVO: distinto de taia (ar)"},
+    {"root": "svima", "pos": "n", "cls": "calum", "pt_n": ["chuva"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "წვიმა ts'vima", "note": "dublê de zōda"},
+    {"root": "tovi", "pos": "n", "cls": "sine", "pt_n": ["neve"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "თოვლი tovli", "note": "NOVO"},
+    {"root": "misa", "pos": "n", "cls": "calum", "pt_n": ["terra", "solo", "chão"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მიწა mits'a", "note": "dublê de yaki"},
+    {"root": "saha", "pos": "n", "cls": "calum", "pt_n": ["céu", "firmamento"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ცა tsa", "note": "dublê de donā"},
+    {"root": "kea", "pos": "n", "cls": "calum", "pt_n": ["árvore"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ხე khe", "note": "dublê de rati"},
+    {"root": "vardi", "pos": "n", "cls": "sine", "pt_n": ["rosa"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ვარდი vardi", "note": "NOVO: a flor rosa"},
+    {"root": "deda", "pos": "n", "cls": "calum", "pt_n": ["mãe", "mamãe"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "დედა deda", "note": "NOVO"},
+    {"root": "mama", "pos": "n", "cls": "calum", "pt_n": ["pai", "papai"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მამა mama", "note": "NOVO"},
+    {"root": "bavsi", "pos": "n", "cls": "sine", "pt_n": ["criança", "filho", "filha"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ბავშვი bavshvi", "note": "dublê de kəte"},
+    {"root": "daia", "pos": "n", "cls": "calum", "pt_n": ["irmã"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "და da", "note": "NOVO"},
+    {"root": "zima", "pos": "n", "cls": "calum", "pt_n": ["irmão"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ძმა dzma", "note": "NOVO"},
+    {"root": "soli", "pos": "n", "cls": "sine", "pt_n": ["esposa", "mulher (cônjuge)"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ცოლი coli", "note": "NOVO"},
+    {"root": "kemari", "pos": "n", "cls": "sine", "pt_n": ["marido", "esposo"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ქმარი kmari", "note": "NOVO"},
+    {"root": "mepe", "pos": "n", "cls": "sine", "pt_n": ["rei"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მეფე mepe", "note": "NOVO"},
+    {"root": "dedopa", "pos": "n", "cls": "calum", "pt_n": ["rainha"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "დედოფალი dedopali", "note": "NOVO"},
+    {"root": "tavi", "pos": "n", "cls": "sine", "pt_n": ["cabeça"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "თავი tavi", "note": "NOVO"},
+    {"root": "tavali", "pos": "n", "cls": "sine", "pt_n": ["olho"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "თვალი tvali", "note": "dublê de zarra"},
+    {"root": "keli", "pos": "n", "cls": "sine", "pt_n": ["mão"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ხელი kheli", "note": "dublê de pole"},
+    {"root": "guli", "pos": "n", "cls": "sine", "pt_n": ["coração"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "გული guli", "note": "dublê de logo"},
+    {"root": "peki", "pos": "n", "cls": "sine", "pt_n": ["pé"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ფეხი pekhi", "note": "dublê de outa"},
+    {"root": "puri", "pos": "n", "cls": "sine", "pt_n": ["pão"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "პური p'uri", "note": "dublê de erst"},
+    {"root": "gvino", "pos": "n", "cls": "calum", "pt_n": ["vinho"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ღვინო ghvino", "note": "NOVO"},
+    {"root": "reze", "pos": "n", "cls": "sine", "pt_n": ["leite"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "რძე rdze", "note": "dublê de nāmo"},
+    {"root": "kveli", "pos": "n", "cls": "sine", "pt_n": ["queijo"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ყველი q'veli", "note": "dublê de gazoi"},
+    {"root": "korsi", "pos": "n", "cls": "sine", "pt_n": ["carne"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ხორცი khortsi", "note": "dublê de mōve"},
+    {"root": "vasli", "pos": "n", "cls": "sine", "pt_n": ["maçã"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ვაშლი vashli", "note": "dublê de tōga"},
+    {"root": "tevi", "pos": "n", "cls": "sine", "pt_n": ["peixe"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "თევზი tevzi", "note": "dublê de passt"},
+    {"root": "gemerti", "pos": "n", "cls": "sine", "pt_n": ["deus", "divindade"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ღმერთი ghmerti", "note": "dublê de mie"},
+    {"root": "suli", "pos": "n", "cls": "sine", "pt_n": ["alma", "espírito"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სული suli", "note": "NOVO"},
+    {"root": "sitva", "pos": "n", "cls": "calum", "pt_n": ["palavra"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სიტყვა sit'q'va", "note": "dublê de vinūs"},
+    {"root": "ena", "pos": "n", "cls": "calum", "pt_n": ["língua", "idioma"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ენა ena", "note": "dublê de āsato"},
+    {"root": "omi", "pos": "n", "cls": "sine", "pt_n": ["guerra"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ომი omi", "note": "dublê de mix"},
+    {"root": "svida", "pos": "n", "cls": "calum", "pt_n": ["paz"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მშვიდობა mshvidoba", "note": "dublê de hīgal"},
+    {"root": "tavisu", "pos": "n", "cls": "calum", "pt_n": ["liberdade"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "თავისუფლება tavisupleba", "note": "dublê de meni"},
+    {"root": "sikvari", "pos": "n", "cls": "sine", "pt_n": ["amor", "carinho"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სიყვარული siq'varuli", "note": "dublê de ma"},
+    {"root": "megoba", "pos": "n", "cls": "calum", "pt_n": ["amigo", "amizade"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "მეგობარი megobari", "note": "dublê de neko"},
+    {"root": "sikari", "pos": "n", "cls": "sine", "pt_n": ["alegria", "felicidade"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სიხარული sikharuli", "note": "dublê de tēne"},
+    {"root": "sisi", "pos": "n", "cls": "sine", "pt_n": ["medo"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "შიში shishi", "note": "dublê de tu"},
+    {"root": "imedi", "pos": "n", "cls": "sine", "pt_n": ["esperança"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "იმედი imedi", "note": "dublê de fita"},
+    {"root": "osne", "pos": "n", "cls": "sine", "pt_n": ["sonho", "devaneio"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ოცნება otsneba", "note": "dublê de məbe"},
+    {"root": "dro", "pos": "n", "cls": "calum", "pt_n": ["tempo"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "დრო dro", "note": "dublê de dasa"},
+    {"root": "sikvi", "pos": "n", "cls": "sine", "pt_n": ["morte"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სიკვდილი sik'vdili", "note": "dublê de tago"},
+    {"root": "sitso", "pos": "n", "cls": "calum", "pt_n": ["vida"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სიცოცხლე sitsotskhle", "note": "dublê de mīli"},
+    {"root": "sinat", "pos": "n", "cls": "calum", "pt_n": ["luz", "claridade"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სინათლე sinatle", "note": "dublê de nā"},
+    {"root": "sibne", "pos": "n", "cls": "sine", "pt_n": ["escuridão", "trevas"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სიბნელე sibnele", "note": "NOVO"},
+    {"root": "pikri", "pos": "n", "cls": "sine", "pt_n": ["pensamento", "ideia"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ფიქრი pikri", "note": "dublê de sita"},
+    {"root": "jari", "pos": "n", "cls": "sine", "pt_n": ["exército", "tropa"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ჯარი jari", "note": "dublê de fírun"},
+    {"root": "signi", "pos": "n", "cls": "sine", "pt_n": ["livro"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "წიგნი ts'igni", "note": "dublê de māge"},
+    {"root": "tamasi", "pos": "n", "cls": "sine", "pt_n": ["jogo", "brincadeira"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "თამაში tamashi", "note": "dublê de midi"},
+    {"root": "sremli", "pos": "n", "cls": "sine", "pt_n": ["lágrima"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "ცრემლი tsremli", "note": "NOVO"},
+    {"root": "sisili", "pos": "n", "cls": "sine", "pt_n": ["riso", "risada"], "pt_v": [], "pt_adj": [], "etym": "kartveli", "src": "სიცილი sitsili", "note": "dublê de tōna"},
+    {"root": "sera", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["escrever"], "pt_adj": [], "etym": "kartveli", "src": "წერა ts'era", "note": "dublê de māge"},
+    {"root": "kitva", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ler"], "pt_adj": [], "etym": "kartveli", "src": "კითხვა k'itkhva", "note": "NOVO"},
+    {"root": "lapara", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["falar", "conversar"], "pt_adj": [], "etym": "kartveli", "src": "ლაპარაკი lap'arak'i", "note": "dublê de miša"},
+    {"root": "sema", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["beber"], "pt_adj": [], "etym": "kartveli", "src": "სმა sma", "note": "dublê de ri"},
+    {"root": "sama", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["comer"], "pt_adj": [], "etym": "kartveli", "src": "ჭამა ch'ama", "note": "dublê de ri"},
+    {"root": "sivla", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ir", "partir"], "pt_adj": [], "etym": "kartveli", "src": "წასვლა ts'asvla", "note": "dublê de fē"},
+    {"root": "mosva", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["vir", "chegar"], "pt_adj": [], "etym": "kartveli", "src": "მოსვლა mosvla", "note": "dublê de šaha"},
+    {"root": "naxa", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ver", "olhar"], "pt_adj": [], "etym": "kartveli", "src": "ნახვა nakhva", "note": "dublê de zarra"},
+    {"root": "soda", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["saber", "conhecer"], "pt_adj": [], "etym": "kartveli", "src": "ცოდნა tsodna", "note": "dublê de tela"},
+    {"root": "semina", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ouvir", "escutar"], "pt_adj": [], "etym": "kartveli", "src": "სმენა smena", "note": "dublê de noro"},
+    {"root": "zina", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["dormir"], "pt_adj": [], "etym": "kartveli", "src": "ძინება dzineba", "note": "dublê de maru"},
+    {"root": "tiri", "pos": "v", "cls": "sine", "pt_n": [], "pt_v": ["chorar"], "pt_adj": [], "etym": "kartveli", "src": "ტირილი t'irili", "note": "dublê de larra"},
+    {"root": "kargu", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["bom", "boa"], "etym": "kartveli", "src": "კარგი k'argi", "note": "dublê de cany"},
+    {"root": "didi", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["grande"], "etym": "kartveli", "src": "დიდი didi", "note": "dublê de cany"},
+    {"root": "patara", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["pequeno", "pequena"], "etym": "kartveli", "src": "პატარა p'at'ara", "note": "dublê de any"},
+    {"root": "lamaz", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["belo", "bela", "bonito"], "etym": "kartveli", "src": "ლამაზი lamazi", "note": "dublê de ho"},
+    {"root": "axal", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["novo", "nova"], "etym": "kartveli", "src": "ახალი akhali", "note": "dublê de gauri"},
+    {"root": "zveli", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["velho", "velha", "antigo"], "etym": "kartveli", "src": "ძველი dzveli", "note": "dublê de some"},
+    {"root": "sivi", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["frio", "fria"], "etym": "kartveli", "src": "ცივი tsivi", "note": "dublê de pozo"},
+    {"root": "skeli", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["quente"], "etym": "kartveli", "src": "ცხელი tskheli", "note": "dublê de məga"},
+    {"root": "juri", "pos": "n", "cls": "sine", "pt_n": ["água"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ջուր jur", "note": "dublê de hara"},
+    {"root": "huri", "pos": "n", "cls": "sine", "pt_n": ["fogo"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "հուր hur", "note": "dublê de aize"},
+    {"root": "karak", "pos": "n", "cls": "calum", "pt_n": ["chama", "fogueira"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "կրակ krak"},
+    {"root": "arev", "pos": "n", "cls": "sine", "pt_n": ["sol"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "արեւ arev", "note": "dublê de hōia"},
+    {"root": "lusin", "pos": "n", "cls": "sine", "pt_n": ["lua"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "լուսին lusin", "note": "dublê de kaša"},
+    {"root": "astex", "pos": "n", "cls": "sine", "pt_n": ["estrela"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "աստղ astgh", "note": "dublê de fathas"},
+    {"root": "erkin", "pos": "n", "cls": "sine", "pt_n": ["céu", "paraíso"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "երկինք yerkink", "note": "dublê de donā"},
+    {"root": "erkir", "pos": "n", "cls": "sine", "pt_n": ["terra", "país", "nação"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "երկիր yerkir"},
+    {"root": "tsara", "pos": "n", "cls": "calum", "pt_n": ["árvore"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ծառ tsar", "note": "dublê de rati"},
+    {"root": "sagik", "pos": "n", "cls": "sine", "pt_n": ["flor"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ծաղիկ tsaghik", "note": "dublê de ēlena"},
+    {"root": "sanapar", "pos": "n", "cls": "calum", "pt_n": ["caminho", "rota", "jornada"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ճանապարհ chanaparh", "note": "dublê de fē"},
+    {"root": "kami", "pos": "n", "cls": "sine", "pt_n": ["vento", "brisa"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "քամի kami", "note": "dublê de kari"},
+    {"root": "anzrev", "pos": "n", "cls": "sine", "pt_n": ["chuva"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "անձրեւ andzrev", "note": "dublê de zōda"},
+    {"root": "zyun", "pos": "n", "cls": "calum", "pt_n": ["neve"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ձյուն dzyun", "note": "dublê de tovi"},
+    {"root": "ler", "pos": "n", "cls": "sine", "pt_n": ["montanha"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "լեռ ler", "note": "dublê de meta"},
+    {"root": "tsov", "pos": "n", "cls": "calum", "pt_n": ["mar"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ծով tsov", "note": "dublê de koze"},
+    {"root": "get", "pos": "n", "cls": "sine", "pt_n": ["rio"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "գետ get", "note": "dublê de dinare"},
+    {"root": "mairi", "pos": "n", "cls": "sine", "pt_n": ["mãe"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "մայր mayr", "note": "dublê de deda"},
+    {"root": "hairi", "pos": "n", "cls": "sine", "pt_n": ["pai"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "հայր hayr", "note": "dublê de mama"},
+    {"root": "ereka", "pos": "n", "cls": "calum", "pt_n": ["criança", "filho"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "երեխա yerekha", "note": "dublê de bavsi"},
+    {"root": "aksika", "pos": "n", "cls": "calum", "pt_n": ["menina", "garota"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "աղջիկ aghjik", "note": "NOVO"},
+    {"root": "tega", "pos": "n", "cls": "calum", "pt_n": ["menino", "garoto"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "տղա tgha", "note": "NOVO"},
+    {"root": "kagak", "pos": "n", "cls": "calum", "pt_n": ["cidade"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "քաղաք kaghak", "note": "dublê de eita"},
+    {"root": "tagavor", "pos": "n", "cls": "calum", "pt_n": ["rei", "monarca"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "թագավոր tagavor", "note": "dublê de mepe"},
+    {"root": "gluxa", "pos": "n", "cls": "calum", "pt_n": ["cabeça"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "գլուխ glukh", "note": "dublê de tavi"},
+    {"root": "aska", "pos": "n", "cls": "calum", "pt_n": ["olho"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "աչք achk", "note": "dublê de zarra"},
+    {"root": "zerka", "pos": "n", "cls": "calum", "pt_n": ["mão"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ձեռք dzerk", "note": "dublê de pole"},
+    {"root": "sirta", "pos": "n", "cls": "calum", "pt_n": ["coração"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "սիրտ sirt", "note": "dublê de logo"},
+    {"root": "votk", "pos": "n", "cls": "calum", "pt_n": ["pé"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ոտք votk", "note": "dublê de outa"},
+    {"root": "aryun", "pos": "n", "cls": "calum", "pt_n": ["sangue"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "արյուն aryun", "note": "NOVO"},
+    {"root": "voskor", "pos": "n", "cls": "calum", "pt_n": ["osso"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ոսկոր voskor", "note": "NOVO"},
+    {"root": "mask", "pos": "n", "cls": "calum", "pt_n": ["pele"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "մաշկ mashk", "note": "NOVO"},
+    {"root": "hasi", "pos": "n", "cls": "sine", "pt_n": ["pão"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "հաց hats", "note": "dublê de erst"},
+    {"root": "gini", "pos": "n", "cls": "sine", "pt_n": ["vinho"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "գինի gini", "note": "dublê de gvino"},
+    {"root": "kat", "pos": "n", "cls": "calum", "pt_n": ["leite"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "կաթ kat", "note": "dublê de nāmo"},
+    {"root": "zuk", "pos": "n", "cls": "calum", "pt_n": ["peixe"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ձուկ dzuk", "note": "dublê de passt"},
+    {"root": "voski", "pos": "n", "cls": "sine", "pt_n": ["ouro"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ոսկի voski", "note": "NOVO"},
+    {"root": "erkat", "pos": "n", "cls": "calum", "pt_n": ["ferro"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "երկաթ yerkat", "note": "NOVO"},
+    {"root": "karr", "pos": "n", "cls": "calum", "pt_n": ["pedra"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "քար kar", "note": "dublê de kava"},
+    {"root": "astvas", "pos": "n", "cls": "calum", "pt_n": ["deus"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "աստված astvats", "note": "dublê de mie"},
+    {"root": "hogi", "pos": "n", "cls": "sine", "pt_n": ["alma", "espírito"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "հոգի hogi", "note": "dublê de suli"},
+    {"root": "smarta", "pos": "n", "cls": "calum", "pt_n": ["verdade"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ճշմարտություն chshmartutyun", "note": "dublê de vida"},
+    {"root": "bara", "pos": "n", "cls": "calum", "pt_n": ["palavra"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "բառ bar", "note": "dublê de sitva"},
+    {"root": "lezu", "pos": "n", "cls": "calum", "pt_n": ["língua", "idioma"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "լեզու lezu", "note": "dublê de ena"},
+    {"root": "anun", "pos": "n", "cls": "calum", "pt_n": ["nome"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "անուն anun", "note": "dublê de nea"},
+    {"root": "or", "pos": "n", "cls": "calum", "pt_n": ["dia"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "օր or", "note": "dublê de dege"},
+    {"root": "giser", "pos": "n", "cls": "sine", "pt_n": ["noite"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "գիշեր gisher", "note": "dublê de game"},
+    {"root": "jamanak", "pos": "n", "cls": "calum", "pt_n": ["tempo", "época", "hora"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ժամանակ zhamanak", "note": "dublê de dasa"},
+    {"root": "paterazm", "pos": "n", "cls": "calum", "pt_n": ["guerra"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "պատերազմ paterazm", "note": "dublê de omi"},
+    {"root": "kagag", "pos": "n", "cls": "calum", "pt_n": ["paz"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "խաղաղություն khaghaghutyun", "note": "dublê de svida"},
+    {"root": "azat", "pos": "n", "cls": "calum", "pt_n": ["liberdade"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ազատություն azatutyun", "note": "dublê de meni"},
+    {"root": "kyank", "pos": "n", "cls": "calum", "pt_n": ["vida"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "կյանք kyank", "note": "dublê de mīli"},
+    {"root": "mah", "pos": "n", "cls": "calum", "pt_n": ["morte"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "մահ mah", "note": "dublê de tago"},
+    {"root": "luis", "pos": "n", "cls": "sine", "pt_n": ["luz"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "լույս luys", "note": "dublê de nā"},
+    {"root": "xavar", "pos": "n", "cls": "calum", "pt_n": ["escuridão", "trevas"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "խավար khavar", "note": "dublê de sibne"},
+    {"root": "uj", "pos": "n", "cls": "calum", "pt_n": ["força", "poder"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ուժ uzh", "note": "dublê de pani"},
+    {"root": "askar", "pos": "n", "cls": "calum", "pt_n": ["mundo", "universo"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "աշխարհ ashkharh", "note": "dublê de pāvi"},
+    {"root": "askatank", "pos": "n", "cls": "calum", "pt_n": ["trabalho", "labor"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "աշխատանք ashkhatank", "note": "dublê de noti"},
+    {"root": "vax", "pos": "n", "cls": "calum", "pt_n": ["medo", "pavor"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "վախ vakh", "note": "dublê de tu"},
+    {"root": "uraxa", "pos": "n", "cls": "calum", "pt_n": ["alegria", "júbilo"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ուրախություն urakhutyun", "note": "dublê de tēne"},
+    {"root": "huis", "pos": "n", "cls": "sine", "pt_n": ["esperança"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "հույս huys", "note": "dublê de fita"},
+    {"root": "eraz", "pos": "n", "cls": "calum", "pt_n": ["sonho"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "երազ yeraz", "note": "dublê de məbe"},
+    {"root": "erg", "pos": "n", "cls": "sine", "pt_n": ["canção", "música"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "երգ yerg", "note": "NOVO"},
+    {"root": "par", "pos": "n", "cls": "calum", "pt_n": ["dança"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "պար par", "note": "dublê de gahi"},
+    {"root": "enker", "pos": "n", "cls": "sine", "pt_n": ["amigo", "companheiro"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ընկեր ənker", "note": "dublê de neko"},
+    {"root": "girki", "pos": "n", "cls": "sine", "pt_n": ["livro"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "գիրք girk", "note": "dublê de māge"},
+    {"root": "tuni", "pos": "n", "cls": "sine", "pt_n": ["casa", "lar"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "տուն tun", "note": "dublê de lisa"},
+    {"root": "pox", "pos": "n", "cls": "calum", "pt_n": ["dinheiro"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "փող pogh", "note": "dublê de nāta"},
+    {"root": "dur", "pos": "n", "cls": "calum", "pt_n": ["porta"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "դուռ dur", "note": "dublê de pia"},
+    {"root": "patuan", "pos": "n", "cls": "calum", "pt_n": ["janela"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "պատուհան patuhan", "note": "dublê de kios"},
+    {"root": "guin", "pos": "n", "cls": "sine", "pt_n": ["cor"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "գույն guyn", "note": "NOVO: termo genérico p/ cor"},
+    {"root": "tiv", "pos": "n", "cls": "sine", "pt_n": ["número"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "թիվ tiv", "note": "dublê de kūlata"},
+    {"root": "utela", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["comer"], "pt_adj": [], "etym": "hayeren", "src": "ուտել utel", "note": "dublê de ri"},
+    {"root": "xemela", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["beber"], "pt_adj": [], "etym": "hayeren", "src": "խմել khmel", "note": "dublê de ri"},
+    {"root": "genala", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ir", "andar"], "pt_adj": [], "etym": "hayeren", "src": "գնալ gnal", "note": "dublê de fē"},
+    {"root": "tesena", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ver", "enxergar"], "pt_adj": [], "etym": "hayeren", "src": "տեսնել tesnel", "note": "dublê de zarra"},
+    {"root": "gitena", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["saber", "conhecer"], "pt_adj": [], "etym": "hayeren", "src": "գիտենալ gitenal", "note": "dublê de tela"},
+    {"root": "xosela", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["falar", "dizer"], "pt_adj": [], "etym": "hayeren", "src": "խոսել khosel", "note": "dublê de miša"},
+    {"root": "gerela", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["escrever"], "pt_adj": [], "etym": "hayeren", "src": "գրել grel", "note": "dublê de māge"},
+    {"root": "kardala", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["ler"], "pt_adj": [], "etym": "hayeren", "src": "կարդալ kardal", "note": "dublê de kitva"},
+    {"root": "kenela", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["dormir"], "pt_adj": [], "etym": "hayeren", "src": "քնել knel", "note": "dublê de maru"},
+    {"root": "sirela", "pos": "v", "cls": "calum", "pt_n": [], "pt_v": ["amar", "gostar"], "pt_adj": [], "etym": "hayeren", "src": "սիրել sirel", "note": "dublê de ma"},
+    {"root": "lav", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["bom", "boa", "bem"], "etym": "hayeren", "src": "լավ lav", "note": "dublê de cany"},
+    {"root": "mes", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["grande"], "etym": "hayeren", "src": "մեծ mets", "note": "dublê de cany"},
+    {"root": "pokr", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["pequeno", "pequena"], "etym": "hayeren", "src": "փոքր pokr", "note": "dublê de any"},
+    {"root": "gegetsik", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["belo", "bonito", "lindo"], "etym": "hayeren", "src": "գեղեցիկ geghetsik", "note": "dublê de ho"},
+    {"root": "surt", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["frio"], "etym": "hayeren", "src": "ցուրտ tsurt", "note": "dublê de pozo"},
+    {"root": "tak", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["quente", "morno"], "etym": "hayeren", "src": "տաք tak", "note": "dublê de məga"},
+    {"root": "spitak", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["branco"], "etym": "hayeren", "src": "սպիտակ spitak", "note": "dublê de nā"},
+    {"root": "sev", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["preto", "negro"], "etym": "hayeren", "src": "սեւ sev", "note": "dublê de gāli"},
+    {"root": "karmir", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["vermelho"], "etym": "hayeren", "src": "կարմիր karmir", "note": "dublê de ab"},
+    {"root": "kanas", "pos": "adj", "cls": "calum", "pt_n": [], "pt_v": [], "pt_adj": ["verde"], "etym": "hayeren", "src": "կանաչ kanach", "note": "dublê de gāna"},
+    {"root": "kapuit", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["azul"], "etym": "hayeren", "src": "կապույտ kapuyt", "note": "dublê de taiga"},
+    {"root": "degin", "pos": "adj", "cls": "sine", "pt_n": [], "pt_v": [], "pt_adj": ["amarelo"], "etym": "hayeren", "src": "դեղին deghin", "note": "dublê de melo"},
+    {"root": "ayo", "pos": "adv", "cls": "calum", "pt_n": ["sim"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "այո ayo", "note": "dublê de heia"},
+    {"root": "vos", "pos": "adv", "cls": "calum", "pt_n": ["não"], "pt_v": [], "pt_adj": [], "etym": "hayeren", "src": "ոչ voch", "note": "dublê de es"},
+  ];
+
+  // ---- normalização de chave PT (minúsculas, sem acentos, sem pontuação) ----
+  function normPT(s){
+    return (s||'').toString().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9\s'-]/g,'').trim();
+  }
+
+  // ---- índice PT -> [entradas] (montado uma vez) ----
+  var INDEX = Object.create(null);
+  function pushIdx(key, ent, cat){
+    key = normPT(key); if(!key) return;
+    (INDEX[key] = INDEX[key] || []).push({e:ent, cat:cat});
+  }
+  ENTRIES.forEach(function(ent){
+    ent.pt_v.forEach(function(g){ pushIdx(g, ent, 'v'); });
+    ent.pt_n.forEach(function(g){ pushIdx(g, ent, ent.pos==='adv'?'adv':'n'); });
+    ent.pt_adj.forEach(function(g){ pushIdx(g, ent, 'adj'); });
+  });
+
+  var LEX = { entries: ENTRIES, index: INDEX, normPT: normPT,
+    lookup: function(word){ return INDEX[normPT(word)] || null; },
+    count: ENTRIES.length };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = LEX;
+  else root.EKHAN_LEXICON = LEX;
+})(typeof self !== 'undefined' ? self : this);/* ============================================================================
+   EKHAN — MOTOR MORFOLÓGICO (ekhan-morphology.js)
+   Funções puras que FLEXIONAM e DERIVAM palavras a partir de uma raiz Ekhan,
+   usando as tabelas de ekhan-grammar.js. Sem dependência de DOM.
+   ========================================================================== */
+(function (root) {
+  'use strict';
+  var G = (typeof module !== 'undefined' && module.exports)
+        ? require('../data/ekhan-grammar.js')
+        : root.EKHAN_GRAMMAR;
+
+  var VOWELS = 'aeiouāēīōūáéíóúəàèìòùâêîôûäëïöü';
+  function isV(ch){ return VOWELS.indexOf((ch||'').toLowerCase()) >= 0; }
+  function endsVowel(w){ return w && isV(w[w.length-1]); }
+  function lastVowel(w){
+    for (var i=w.length-1;i>=0;i--) if (isV(w[i])) return w[i].toLowerCase();
+    return '';
+  }
+  // classe de conjugação a partir da raiz (a/o/u -> calum ; e/i -> sine)
+  function verbClass(rootw){
+    var lv = lastVowel(rootw);
+    return ('eiēīéíəèìêîëï'.indexOf(lv) >= 0) ? 'sine' : 'calum';
+  }
+  // escolhe alomorfe [após-consoante, após-vogal]
+  function pick(pairOrStr, stem){
+    if (typeof pairOrStr === 'string') return pairOrStr;
+    if (Array.isArray(pairOrStr)) return endsVowel(stem) ? pairOrStr[1] : pairOrStr[0];
+    // objeto {calum,sine}
+    return pairOrStr[verbClass(stem)];
+  }
+  function suffixFor(table, person, stem, cls){
+    var cell = table[person];
+    if (cell == null) return '';
+    if (typeof cell === 'string') return cell;
+    return cell[cls || verbClass(stem)];
+  }
+
+  /* --------------------------- VERBOS -------------------------------- */
+  // infinitivo: consoante->+a ; vogal->+h
+  function infinitive(rootw){
+    return rootw + (endsVowel(rootw) ? G.DERIVATION.infinitive[1] : G.DERIVATION.infinitive[0]);
+  }
+
+  // conjuga um tempo "primário": present | past | future
+  function conjPrimary(rootw, tense, person){
+    var cls = verbClass(rootw);
+    var tbl = G.VERB[tense];
+    if (!tbl) return rootw;
+    return rootw + suffixFor(tbl, person, rootw, cls);
+  }
+
+  // radical de particípio (para tempos compostos)
+  function participleStem(rootw, person){
+    var cls = verbClass(rootw);
+    return rootw + suffixFor(G.VERB.participle, person, rootw, cls);
+  }
+
+  // conjuga qualquer tempo (inclui derivados)
+  //   tense in: present, past, future, imperfect, pluperfect, immediate, conditional
+  function conjugate(rootw, tense, person){
+    person = person || 'av';
+    if (['present','past','future'].indexOf(tense) >= 0)
+      return conjPrimary(rootw, tense, person);
+    var d = G.VERB.derived[tense];
+    if (!d) return conjPrimary(rootw, 'present', person);
+    var base = (d.base === 'participle')
+      ? participleStem(rootw, person)
+      : conjPrimary(rootw, d.base, person);
+    return base + d.add;
+  }
+
+  // MODOS
+  function subjunctive(rootw, tense, person){  // "ta" + forma flexionada
+    return G.VERB.moods.subjunctive.particle + ' ' + conjugate(rootw, tense || 'present', person);
+  }
+  function imperative(rootw){                   // "ou" + raiz
+    return G.VERB.moods.imperative.particle + ' ' + rootw;
+  }
+  function admirative(rootw, tense, person){    // "he" + forma flexionada
+    return G.VERB.moods.admirative.particle + ' ' + conjugate(rootw, tense || 'past', person);
+  }
+  function copula(person){ return G.VERB.copula[person || 'yt']; }
+
+  // auxiliar modal: partícula + verbo flexionado. modalKey ∈ G.VERB.modals
+  function withModal(rootw, modalKey, tense, person){
+    var m = G.VERB.modals[modalKey];
+    if (!m) return conjugate(rootw, tense, person);
+    var part = (tense === 'past' || tense === 'pluperfect' || tense === 'conditional') ? m.p[1] : m.p[0];
+    return part + ' ' + conjugate(rootw, tense || 'present', person);
+  }
+
+  function negate(verbForm){ return G.VERB.negation.simple + ' ' + verbForm; }
+
+  /* --------------------------- SUBSTANTIVOS -------------------------- */
+  // declina: caso ∈ nom,acc,gen,dat,loc,ins ; number ∈ 'sg','pl'
+  function decline(stem, caseName, number){
+    caseName = caseName || 'nom'; number = number || 'sg';
+    var tbl = (number === 'pl') ? G.CASES.plural : G.CASES.singular;
+    var suf = pick(tbl[caseName], stem);
+    return stem + (suf || '');
+  }
+  // artigo definido enclítico
+  function definite(stem){
+    return stem + (endsVowel(stem) ? G.ARTICLES.definite[1] : G.ARTICLES.definite[0]);
+  }
+
+  /* --------------------------- DERIVAÇÃO ---------------------------- */
+  function deriveAble(rootw){ return rootw + G.DERIVATION.able; }              // -ável
+  function deriveAgent(rootw){ return rootw + pick(G.DERIVATION.agent, rootw); }   // -dor
+  function deriveCapacity(rootw){ return rootw + pick(G.DERIVATION.capacity, rootw); } // -ístico/capaz
+  function deriveRelative(rootw){ return rootw + G.DERIVATION.relative; }      // relativo a
+  function deriveParticiple(rootw){ return rootw + pick(G.DERIVATION.participle, rootw); }
+  function deriveProfession(rootw){
+    var s = endsVowel(rootw) ? rootw.slice(0,-1) : rootw;   // vogal final some antes de -eht
+    return s + G.DERIVATION.profession[0];
+  }
+  function deriveConcept(rootw){ return rootw + pick(G.DERIVATION.concept, rootw); } // ideia/conceito
+  function deriveLanguage(rootw){ return rootw + pick(G.DERIVATION.language, rootw); }
+  function deriveMachine(rootw){ return rootw + pick(G.DERIVATION.machine, rootw); }
+  function deriveColorAdj(rootw){ return rootw + pick(G.DERIVATION.color, rootw); }
+  function deriveQuality(rootw){ return rootw + pick(G.DERIVATION.quality, rootw); }
+
+  /* --------------------------- NUMERAIS ----------------------------- */
+  function numberToEkhan(n){
+    n = Math.floor(Math.abs(+n || 0));
+    var N = G.NUMERALS;
+    if (n <= 9) return N.ones[n];
+    var parts = [];
+    var th = Math.floor(n/1000); n %= 1000;
+    var hu = Math.floor(n/100);  n %= 100;
+    var te = Math.floor(n/10);   var un = n % 10;
+    if (th){ parts.push(th===1 ? N.thousand : N.combining[th] + N.thousand); }
+    if (hu){ parts.push(hu===1 ? N.hundred  : N.combining[hu] + N.hundred); }
+    if (te){ parts.push(te===1 ? N.ten      : N.combining[te] + N.ten); }
+    if (un){ parts.push(N.ones[un]); }
+    return parts.join(' ');
+  }
+  function ordinal(n){ return numberToEkhan(n) + G.NUMERALS.ordinalSuffix; }
+
+  /* ------------------------------ export ---------------------------- */
+  var M = {
+    isVowel:isV, endsVowel:endsVowel, lastVowel:lastVowel, verbClass:verbClass,
+    infinitive:infinitive, conjugate:conjugate, participleStem:participleStem,
+    subjunctive:subjunctive, imperative:imperative, admirative:admirative,
+    copula:copula, withModal:withModal, negate:negate,
+    decline:decline, definite:definite,
+    deriveAble:deriveAble, deriveAgent:deriveAgent, deriveCapacity:deriveCapacity,
+    deriveRelative:deriveRelative, deriveParticiple:deriveParticiple,
+    deriveProfession:deriveProfession, deriveConcept:deriveConcept,
+    deriveLanguage:deriveLanguage, deriveMachine:deriveMachine,
+    deriveColorAdj:deriveColorAdj, deriveQuality:deriveQuality,
+    numberToEkhan:numberToEkhan, ordinal:ordinal
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = M;
+  else root.EKHAN_MORPH = M;
+})(typeof self !== 'undefined' ? self : this);
+/* ============================================================================
+   EKHAN — TRADUTOR PORTUGUÊS → EKHAN (ekhan-translator.js)   [v2]
+   Tradutor baseado em regras: tokeniza o português, classifica cada palavra
+   (pronome, artigo, preposição, conjunção, advérbio, numeral, verbo, substantivo…)
+   e monta a frase em Ekhan flexionando com o motor morfológico.
+
+   Recursos: perífrases modais ("quero comer"→partícula+verbo) e futuro
+   perifrástico ("vou dormir"→futuro imediato), acusativo pós-verbal,
+   plurais, desambiguação "e"/"é", cópula, negação.
+
+   APROXIMAÇÃO didática — não é tradução estatística. Palavras fora do léxico
+   são transliteradas foneticamente e marcadas com ⟨ ⟩.
+   Retorna: { ekhan, tokens:[{pt,ek,tag,note}] }
+   ========================================================================== */
+(function (root) {
+  'use strict';
+  var isNode = (typeof module !== 'undefined' && module.exports);
+  var G   = isNode ? require('../data/ekhan-grammar.js') : root.EKHAN_GRAMMAR;
+  var LEX = isNode ? require('../data/ekhan-lexicon.js') : root.EKHAN_LEXICON;
+  var M   = isNode ? require('./ekhan-morphology.js')    : root.EKHAN_MORPH;
+  var norm = LEX.normPT;
+
+  /* ---------- tabelas auxiliares ---------- */
+  var ARTS_DEF   = {'o':1,'a':1,'os':1,'as':1};
+  var ARTS_INDEF = {'um':1,'uma':1,'uns':1,'umas':1};
+  var CLITIC_OBJ = {'me':1,'te':1,'lhe':1,'lhes':1,'vos':1};   // objeto proclítico inequívoco
+  var NO_PLURAL  = {'lapis':1,'apos':1,'atras':1,'mais':1,'menos':1,'pais':1};
+  // verbos PT muito frequentes (irregulares) tratados diretamente
+  var IRREG = {
+    'sou':{copula:1},'somos':{copula:1},'sao':{copula:1},'são':{copula:1},
+    'estou':{copula:1},'esta':{copula:1},'está':{copula:1},'estamos':{copula:1},'estao':{copula:1},'estão':{copula:1},
+    'era':{copula:1},'foi':{copula:1},'ser':{copula:1},'estar':{copula:1},'parece':{copula:1},'fica':{copula:1},'sera':{copula:1},'será':{copula:1},
+    'posso':{modal:'possibilidade'},'pode':{modal:'possibilidade'},'podem':{modal:'possibilidade'},'poder':{modal:'possibilidade'},'poderia':{modal:'possibilidade',tense:'past'},
+    'devo':{modal:'dever'},'deve':{modal:'dever'},'devem':{modal:'dever'},'deveria':{modal:'dever',tense:'past'},'dever':{modal:'dever'},
+    'preciso':{modal:'necessidade',fb:'ráse'},'precisa':{modal:'necessidade',fb:'ráse'},'precisamos':{modal:'necessidade',fb:'ráse'},'precisar':{modal:'necessidade',fb:'ráse'},
+    'quero':{modal:'querer',fb:'za'},'quer':{modal:'querer',fb:'za'},'queremos':{modal:'querer',fb:'za'},'querem':{modal:'querer',fb:'za'},'querer':{modal:'querer',fb:'za'},'queria':{modal:'querer',tense:'past',fb:'za'},
+    'tenho':{r:'mino'},'tem':{r:'mino'},'temos':{r:'mino'},'tém':{r:'mino'},'ter':{r:'mino'},'tinha':{r:'mino',tense:'imperfect'},'teve':{r:'mino',tense:'past'},
+    'vou':{ir:1},'vai':{ir:1},'vamos':{ir:1},'vão':{ir:1},'vao':{ir:1},'ir':{r:'fē'},
+    'faço':{r:'a'},'faz':{r:'a'},'fazem':{r:'a'},'fazer':{r:'a'},'fazemos':{r:'a'},'fiz':{r:'a',tense:'past'},
+    // outros verbos irregulares frequentes -> raiz Ekhan
+    'vejo':{r:'zaha'},'ve':{r:'zaha'},'veem':{r:'zaha'},'vemos':{r:'zaha'},'ver':{r:'zaha'},'vi':{r:'zaha',tense:'past'},'viu':{r:'zaha',tense:'past'},'via':{r:'zaha',tense:'imperfect'},
+    'sei':{r:'tela'},'sabe':{r:'tela'},'sabemos':{r:'tela'},'sabem':{r:'tela'},'saber':{r:'tela'},'soube':{r:'tela',tense:'past'},
+    'digo':{r:'missa'},'diz':{r:'missa'},'dizem':{r:'missa'},'dizer':{r:'missa'},'disse':{r:'missa',tense:'past'},
+    'venho':{r:'šaha'},'vem':{r:'šaha'},'vimos':{r:'šaha'},'vir':{r:'šaha'},'veio':{r:'šaha',tense:'past'},
+    'trago':{r:'daga'},'traz':{r:'daga'},'trazer':{r:'daga'},'trouxe':{r:'daga',tense:'past'},
+    'saio':{r:'kuna'},'sai':{r:'kuna'},'saem':{r:'kuna'},'sair':{r:'kuna'},'saiu':{r:'kuna',tense:'past'},
+    'dou':{r:'daga'},'da':{r:'daga'},'dar':{r:'daga'},'deu':{r:'daga',tense:'past'},
+    'leio':{r:'kitva'},'le':{r:'kitva'},'ler':{r:'kitva'},'leu':{r:'kitva',tense:'past'},
+    'ouço':{r:'noro'},'ouve':{r:'noro'},'ouvir':{r:'noro'},'ouviu':{r:'noro',tense:'past'}
+  };
+
+  /* ---------- transliteração de fallback ---------- */
+  function translit(w){
+    var s = w.toLowerCase();
+    s = s.replace(/ç/g,'s').replace(/ch/g,'š').replace(/lh/g,'ʎ')
+         .replace(/qu/g,'k').replace(/c([ei])/g,'s$1').replace(/c/g,'k')
+         .replace(/ss/g,'s').replace(/x/g,'š').replace(/rr/g,'r').replace(/ph/g,'f');
+    return '⟨'+s+'⟩';
+  }
+
+  /* ---------- singularização leve de substantivos PT ---------- */
+  function singularCandidates(w){
+    var c = [w];
+    if (/s$/.test(w) && w.length>3){
+      c.push(w.replace(/s$/,''));                 // casas->casa
+      if (/es$/.test(w)) c.push(w.replace(/es$/,''));   // flores->flor
+      if (/is$/.test(w)) c.push(w.replace(/is$/,'l'));  // animais->animal
+      if (/ns$/.test(w)) c.push(w.replace(/ns$/,'m'));  // homens->homem
+      if (/oes$/.test(w)) c.push(w.replace(/oes$/,'ao')); // limoes->limao
+    }
+    return c;
+  }
+
+  /* ---------- heurística de verbo PT ---------- */
+  function ptVerbGuess(word){
+    var w = norm(word), tense='present', stripped=false, stem=w;
+    var mFut  = w.match(/^(.*?)(rei|ras|rá|rás|remos|rao|rão|reis)$/);
+    var mImp  = w.match(/^(.*?)(avamos|avam|ava|iamos|iam|ia)$/);
+    var mPast = w.match(/^(.*?)(aste|aram|este|eram|iram|iu|ei|ou|eu|i)$/);
+    var mPres = w.match(/^(.*?)(amos|emos|imos|am|em|as|es|o|a|e)$/);
+    if (mFut){ tense='future'; stem=mFut[1]; stripped=true; }
+    else if (mImp){ tense='imperfect'; stem=mImp[1]; stripped=true; }
+    else if (mPast){ tense='past'; stem=mPast[1]; stripped=true; }
+    else if (mPres){ tense='present'; stem=mPres[1]; stripped=(mPres[2].length>0); }
+    var cand = [w];
+    if (stripped && stem.length>=2){ ['ar','er','ir','e','a','i',''].forEach(function(e){ cand.push(stem+e); }); }
+    return {cands:cand, tense:tense, stripped:stripped};
+  }
+  function personFrom(word, active){
+    var w = norm(word);
+    if (active) return active;
+    if (/(amos|emos|imos)$/.test(w)) return 'ea';
+    if (/(am|em|aram|eram|iram|arao|rao|rão|avam|iam)$/.test(w)) return 'am';
+    if (/o$/.test(w)) return 'av';
+    return 'yt';
+  }
+  function isInfinitive(w){ return /(ar|er|ir)$/.test(norm(w)); }
+
+  /* ---------- busca no léxico ---------- */
+  function lexFind(word, wantCat){
+    var hits = LEX.lookup(word);
+    if (!hits) return null;
+    var byCat = hits.filter(function(h){ return h.cat===wantCat; });
+    var pool = byCat.length ? byCat : hits;
+    pool = pool.slice().sort(function(a,b){ return (a.e.etym==='nativo'?0:1)-(b.e.etym==='nativo'?0:1); });
+    return pool[0];
+  }
+  function findVerb(word){
+    var vg = ptVerbGuess(word);
+    for (var c=0;c<vg.cands.length;c++){
+      if (vg.cands[c].length < 2) continue;          // evita raízes de 1 letra (a/o/e)
+      var h = lexFind(vg.cands[c],'v');
+      if (h && h.cat==='v') return {hit:h, tense:vg.tense, stripped:vg.stripped};
+    }
+    return {hit:null, tense:vg.tense, stripped:vg.stripped};
+  }
+
+  /* ---------- frases de várias palavras ---------- */
+  function buildPhrases(){
+    var P = {};
+    function addAll(map, tag){ for (var k in map) if (k.indexOf(' ')>=0) P[norm(k)]={ek:map[k],tag:tag}; }
+    addAll(G.GREETINGS,'saud'); addAll(G.CONJUNCTIONS,'conj'); addAll(G.PREPOSITIONS,'prep');
+    addAll(G.ADVERBS,'adv'); addAll(G.INTERROGATIVES,'interr'); addAll(G.INDEFINITES,'indef');
+    for (var k in G.CASES.prepCase) if (k.indexOf(' ')>=0) P[norm(k)]={caseTrig:G.CASES.prepCase[k],tag:'prep-caso'};
+    return P;
+  }
+  var PHRASES = buildPhrases(), MAXPHRASE = 3;
+
+  /* ============================ NÚCLEO ============================ */
+  function translateSentence(sentence){
+    var raw = sentence.match(/[0-9]+([.,][0-9]+)?|[\p{L}][\p{L}'’-]*|[^\s\p{L}0-9]/gu) || [];
+    var words = raw.map(function(t){ return t.replace(/’/g,"'"); });
+    var out = [];
+    var st = {person:null, pcase:null, art:null, neg:false, sawVerb:false, pendObj:null};
+    var i = 0;
+    function push(pt,ek,tag,note){ out.push({pt:pt,ek:ek,tag:tag,note:note||''}); }
+    // objeto proclítico do português é reposicionado DEPOIS do verbo (Ekhan é SVO)
+    function flushObj(){ if (st.pendObj){ push(st.pendObj.pt, st.pendObj.ek, 'pron-obj'); st.pendObj=null; } }
+    function emitVerb(rootw, tense, person, etym){
+      var f = M.conjugate(rootw, tense, person);
+      if (st.neg){ f = G.VERB.negation.simple+' '+f; st.neg=false; }
+      push(words[i], f, 'verbo', etym&&etym!=='nativo'?('['+etym+']'):'');
+      st.sawVerb = true; flushObj();
+    }
+
+    while (i < words.length){
+      var wOrig = words[i], w = norm(wOrig), wl = wOrig.toLowerCase();
+
+      // pontuação
+      if (/^[^\p{L}0-9]$/u.test(wOrig)){ push(wOrig,wOrig,'pont'); i++; continue; }
+      // algarismos
+      if (/^[0-9]+/.test(wOrig)){ push(wOrig,M.numberToEkhan(parseInt(wOrig,10)),'num'); i++; continue; }
+
+      // desambiguação e/é (mantém acento, ignora maiúscula)
+      if (wl==='e'){ push(wOrig,G.CONJUNCTIONS['e'],'conj'); i++; continue; }
+      if (wl==='é'){ push(wOrig,M.copula(st.person||'yt'),'cop'); i++; continue; }
+
+      // frase de várias palavras (gulosa)
+      var matched=false;
+      for (var n=Math.min(MAXPHRASE, words.length-i); n>=2; n--){
+        var ph=norm(words.slice(i,i+n).join(' '));
+        if (PHRASES[ph]){
+          if (PHRASES[ph].caseTrig) st.pcase=PHRASES[ph].caseTrig;
+          else push(words.slice(i,i+n).join(' '),PHRASES[ph].ek,PHRASES[ph].tag);
+          i+=n; matched=true; break;
+        }
+      }
+      if (matched) continue;
+
+      // número por extenso (um/uma são tratados como artigo, não numeral)
+      if (G.NUMERALS.wordsPT[w]!=null && !ARTS_INDEF[w]){ push(wOrig,M.numberToEkhan(G.NUMERALS.wordsPT[w]),'num'); i++; continue; }
+
+      // negação: 'es' pré-verbal, sempre visível
+      if (w==='nao'){ push(wOrig,G.VERB.negation.simple,'neg'); st.neg=false; i++; continue; }
+
+      // pronome-sujeito ('nós'=nós ; 'nos'=contração "em+os", tratada como locativo)
+      if (G.PRONOUNS.subjectPT[w] && !(w==='nos' && wl!=='nós')){
+        var pp = G.PRONOUNS.subjectPT[w];
+        if (st.sawVerb){ // pronome pleno DEPOIS do verbo => objeto (acusativo)
+          push(wOrig, G.PRONOUNS.table[pp].acc, 'pron-obj'); i++; continue;
+        }
+        st.person=pp; st.sawVerb=false;
+        push(wOrig,G.PRONOUNS.table[pp].nom,'pron-suj'); i++; continue;
+      }
+      // possessivo
+      if (G.PRONOUNS.possessivePT[w]){ push(wOrig,G.PRONOUNS.possessivePT[w],'poss'); i++; continue; }
+      // pronome-objeto proclítico inequívoco (me/te/lhe/lhes/vos): guardado p/ DEPOIS do verbo.
+      // (o/a/os/as ficam como artigo, pois são ambíguos com clíticos)
+      if (G.PRONOUNS.objectPT[w] && CLITIC_OBJ[w]){ st.pendObj={pt:wOrig, ek:G.PRONOUNS.objectPT[w]}; i++; continue; }
+
+      // artigos e preposições-de-caso ANTES da detecção verbal
+      // (protege 'a'/'o' de colidir com a raiz verbal 'a' = ser/fazer)
+      if (ARTS_DEF[w]){ st.art='def'; push(wOrig,'(def)','art'); i++; continue; }
+      if (ARTS_INDEF[w]){ st.art='indef'; push(wOrig,'(indef)','art'); i++; continue; }
+      if (G.CASES.prepCase[w]){ st.pcase=G.CASES.prepCase[w]; push(wOrig,'(caso '+st.pcase+')','prep-caso'); i++; continue; }
+
+      // ---- se há sujeito ativo, tenta verbo ANTES das palavras funcionais ----
+      if (st.person){
+        if (IRREG[w]){ if (handleIrreg(w)) { i++; continue; } }
+        var vv = findVerb(wOrig);
+        if (vv.hit && (vv.stripped || isInfinitive(wOrig))){
+          emitVerb(vv.hit.e.root, vv.tense, personFrom(wOrig,st.person), vv.hit.e.etym); i++; continue; }
+      }
+
+      // palavras funcionais
+      if (G.CONJUNCTIONS[w]){ push(wOrig,G.CONJUNCTIONS[w],'conj'); i++; continue; }
+      if (G.PREPOSITIONS[w]){ push(wOrig,G.PREPOSITIONS[w],'prep'); i++; continue; }
+      if (G.INTERROGATIVES[w]){ push(wOrig,G.INTERROGATIVES[w],'interr'); i++; continue; }
+      if (G.INDEFINITES[w]){ push(wOrig,G.INDEFINITES[w],'indef'); i++; continue; }
+      if (G.ADVERBS[w]){ push(wOrig,G.ADVERBS[w],'adv'); i++; continue; }
+      if (G.COLORS[w]){ push(wOrig,G.COLORS[w],'cor'); i++; continue; }
+      if (G.GREETINGS[w]){ push(wOrig,G.GREETINGS[w],'saud'); i++; continue; }
+
+      // irregulares sem sujeito (é já tratado; cópula/modais/ir)
+      if (IRREG[w]){ if (handleIrreg(w)) { i++; continue; } }
+
+      // verbo sem sujeito explícito (3ª pessoa) quando há morfologia verbal
+      var noun_ctx = (st.art || st.pcase);
+      if (!noun_ctx){
+        var vv2 = findVerb(wOrig);
+        if (vv2.hit && (vv2.stripped || isInfinitive(wOrig))){
+          if (handleModalLookahead(vv2, wOrig)) continue;
+          emitVerb(vv2.hit.e.root, vv2.tense, personFrom(wOrig,null), vv2.hit.e.etym); i++; continue;
+        }
+      }
+
+      // substantivo / adjetivo
+      var cands = singularCandidates(w), nHit=null, isPl=false;
+      for (var ci=0; ci<cands.length; ci++){
+        nHit = lexFind(cands[ci],'n') || lexFind(cands[ci],'adj') || lexFind(cands[ci],'v');
+        if (nHit){ isPl = (ci>0); break; }
+      }
+      if (nHit){
+        var stem=nHit.e.root;
+        var plural = isPl || (/s$/.test(w)&&w.length>3&&!NO_PLURAL[w]);
+        var cs = st.pcase || (st.sawVerb ? 'acc' : 'nom');
+        var word2 = M.decline(stem, cs, plural?'pl':'sg');
+        if (st.art==='def') word2 = M.definite(word2);
+        st.pcase=null; st.art=null;
+        push(wOrig, word2, nHit.cat==='adj'?'adj':'subst', nHit.e.etym!=='nativo'?('['+nHit.e.etym+']'):'');
+        i++; continue;
+      }
+
+      // desconhecido
+      st.pcase=null; st.art=null;
+      push(wOrig, translit(wOrig), 'descon', 'sem entrada no léxico'); i++;
+    }
+
+    // ---- helpers internos que usam st/out/i ----
+    function handleIrreg(key){
+      var ir=IRREG[key];
+      if (ir.copula){ push(words[i],M.copula(st.person||'yt'),'cop'); return true; }
+      if (ir.modal){ // modal + (lookahead p/ infinitivo seguinte)
+        var per=st.person||'av';
+        var nxt=words[i+1];
+        if (nxt){ var vv=findVerb(nxt); if (vv.hit && (isInfinitive(nxt)||vv.stripped)){
+          var part=G.VERB.modals[ir.modal].p[ir.tense==='past'?1:0];
+          var f=part+' '+M.conjugate(vv.hit.e.root, ir.tense||'present', per);
+          if (st.neg){ f=G.VERB.negation.simple+' '+f; st.neg=false; }
+          push(words[i]+' '+nxt, f, 'modal'); st.sawVerb=true; flushObj(); i++; return true; }}
+        if (ir.fb){ emitVerbInline(ir.fb, ir.tense||'present', personFrom(key,st.person)); return true; }
+        push(words[i], G.VERB.modals[ir.modal].p[ir.tense==='past'?1:0], 'modal'); return true;
+      }
+      if (ir.ir){ // futuro perifrástico "vou/vai + inf"
+        var per2=st.person||'av'; var nxt2=words[i+1];
+        if (nxt2){ var vv2=findVerb(nxt2); if (vv2.hit && isInfinitive(nxt2)){
+          var f2=M.conjugate(vv2.hit.e.root,'immediate',per2);
+          if (st.neg){ f2=G.VERB.negation.simple+' '+f2; st.neg=false; }
+          push(words[i]+' '+nxt2, f2, 'verbo'); st.sawVerb=true; flushObj(); i++; return true; }}
+        emitVerbInline('fē','immediate',per2); return true;
+      }
+      if (ir.r){ emitVerbInline(ir.r, ir.tense||'present', personFrom(key,st.person)); return true; }
+      return false;
+    }
+    function emitVerbInline(rootw,tense,person){
+      var f=M.conjugate(rootw,tense,person);
+      if (st.neg){ f=G.VERB.negation.simple+' '+f; st.neg=false; }
+      push(words[i], f, 'verbo'); st.sawVerb=true; flushObj();
+    }
+    // modal PT vindo do léxico? (não usado; mantido p/ extensão)
+    function handleModalLookahead(vv, wOrig){ return false; }
+
+    flushObj(); // objeto clítico sem verbo seguinte (raro) não se perde
+    var ekhan = out.filter(function(t){ return t.ek && t.ek.indexOf('(')!==0; })
+                   .map(function(t){ return t.ek; }).join(' ').replace(/\s+([,.;:!?])/g,'$1');
+    return {ekhan:ekhan, tokens:out};
+  }
+
+  /* ---------- API ---------- */
+  function translate(text){
+    text=(text||'').trim();
+    if (!text) return {ekhan:'',tokens:[]};
+    var chunks=text.split(/([.!?]+)/).filter(function(s){return s!=='';});
+    var pieces=[], toks=[];
+    chunks.forEach(function(ch){
+      if (/^[.!?]+$/.test(ch)){ pieces.push(ch); return; }
+      var r=translateSentence(ch); pieces.push(r.ekhan); toks=toks.concat(r.tokens);
+    });
+    var ekhan=pieces.join(' ').replace(/\s+([,.;:!?])/g,'$1').replace(/\s{2,}/g,' ').trim();
+    ekhan=ekhan.replace(/(^|[.!?]\s+)([\p{L}⟨])/gu,function(m,p,c){return p+c.toUpperCase();});
+    return {ekhan:ekhan, tokens:toks};
+  }
+
+  var T={translate:translate, translateSentence:translateSentence, transliterate:translit, ptVerbGuess:ptVerbGuess};
+  if (isNode) module.exports=T; else root.EKHAN_TRANSLATE=T;
+})(typeof self!=='undefined'?self:this);
+</script>
+
+<script>
+/* ====== Interface do tradutor ====== */
+(function(){
+  "use strict";
+  var T = window.EKHAN_TRANSLATE;
+  var src = document.getElementById('src');
+  var out = document.getElementById('out');
+  var glossBox = document.getElementById('gloss');
+  var interlinear = document.getElementById('interlinear');
+  var showGloss = document.getElementById('showgloss');
+  var chipsBox = document.getElementById('chips');
+
+  var EXAMPLES = [
+    'Eu quero comer o pão.',
+    'Nós vamos ver o mar amanhã.',
+    'A mãe traz o pão para a filha.',
+    'Ele é grande e forte.',
+    'Você fala a língua?',
+    'Eu tenho dois cavalos.',
+    'Eu não posso dormir hoje.'
+  ];
+
+  // tags que representam material gramatical fundido (não saem na linha principal)
+  function isGram(ek){ return ek && ek.charAt(0) === '('; }
+
+  function classFor(tag, ek){
+    if (isGram(ek)) return 'k-gram';
+    return 'k-' + tag;
+  }
+
+  function renderOutput(text){
+    // destaca palavras desconhecidas ⟨...⟩ em granada
+    var html = text.replace(/[&<>]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];})
+                   .replace(/⟨([^⟩]*)⟩/g, '<span class="unknown">⟨$1⟩</span>');
+    out.innerHTML = html || '<span class="placeholder">A tradução aparece aqui.</span>';
+    out.classList.remove('fade-in'); void out.offsetWidth; out.classList.add('fade-in');
+  }
+
+  function renderGloss(tokens){
+    interlinear.innerHTML = '';
+    tokens.forEach(function(t){
+      if (t.tag === 'pont') return; // pontuação não precisa de cartão
+      var cell = document.createElement('div');
+      cell.className = 'tok ' + classFor(t.tag, t.ek);
+      var ek = document.createElement('div'); ek.className = 't-ek';
+      ek.textContent = isGram(t.ek) ? t.ek.replace(/[()]/g,'') : t.ek;
+      var pt = document.createElement('div'); pt.className = 't-pt'; pt.textContent = t.pt;
+      var tg = document.createElement('div'); tg.className = 't-tag'; tg.textContent = tagLabel(t.tag);
+      cell.appendChild(ek); cell.appendChild(pt); cell.appendChild(tg);
+      if (t.note) cell.title = t.note;
+      interlinear.appendChild(cell);
+    });
+  }
+
+  var LABELS = {
+    'verbo':'verbo','cop':'cópula','subst':'subst.','adj':'adj.','num':'num.',
+    'pron-suj':'pron.','pron-obj':'obj.','poss':'poss.','art':'artigo','prep':'prep.',
+    'prep-caso':'caso','conj':'conj.','adv':'adv.','interr':'interr.','indef':'indef.',
+    'cor':'cor','saud':'saud.','neg':'neg.','descon':'—'
+  };
+  function tagLabel(tag){ return LABELS[tag] || tag; }
+
+  function translate(){
+    var text = src.value.trim();
+    if (!text){ renderOutput(''); interlinear.innerHTML=''; return; }
+    var r = T.translate(text);
+    renderOutput(r.ekhan);
+    renderGloss(r.tokens);
+  }
+
+  // eventos
+  document.getElementById('go').addEventListener('click', translate);
+  src.addEventListener('keydown', function(e){
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); translate(); }
+  });
+  showGloss.addEventListener('change', function(){
+    glossBox.classList.toggle('show', showGloss.checked);
+  });
+
+  // chips de exemplo
+  EXAMPLES.forEach(function(ex){
+    var c = document.createElement('button');
+    c.className = 'chip'; c.type = 'button'; c.textContent = ex;
+    c.addEventListener('click', function(){ src.value = ex; translate(); src.focus(); });
+    chipsBox.appendChild(c);
+  });
+
+  // estado inicial: já mostra um exemplo traduzido
+  src.value = EXAMPLES[0];
+  translate();
+})();
+</script>
+</body>
+</html>
