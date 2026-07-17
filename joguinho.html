@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forca ao Vivo</title>
+<style>
+  :root{
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #2b2d33;
+    --text-dim: #6b6f76;
+    --amber: #c67c1f;   /* quem escreve */
+    --sky: #2b6fb3;     /* quem tenta adivinhar */
+    --coral: #c0392b;   /* erros */
+    --line: #dde0e5;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; min-height:100vh;
+    background: var(--bg);
+    color:var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  body{
+    padding:28px 16px 60px;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .wrap{ width:100%; max-width:920px; }
+
+  header{ text-align:center; margin-bottom:8px; }
+  h1{
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight:700;
+    font-size:clamp(1.8rem, 5vw, 2.4rem);
+    margin:0;
+    color:var(--text);
+  }
+  .sub{
+    color:var(--text-dim); font-size:0.9rem;
+    margin-top:6px;
+  }
+
+  .board{
+    display:grid; grid-template-columns: 220px 1fr; gap:28px;
+    margin-top:26px; align-items:start;
+  }
+  @media (max-width:640px){ .board{ grid-template-columns:1fr; } }
+
+  /* ---- hangman drawing ---- */
+  .gallows-box{ display:flex; flex-direction:column; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; }
+  svg#hangman{ width:100%; max-width:200px; }
+  #hangman path, #hangman line, #hangman circle{
+    stroke:var(--text); stroke-width:3; stroke-linecap:round; fill:none;
+    pathLength:1; stroke-dasharray:1; stroke-dashoffset:0;
+  }
+  #hangman .part{
+    stroke:var(--coral);
+    stroke-dashoffset:1;
+    transition: stroke-dashoffset 0.4s ease;
+  }
+  #hangman .part.drawn{ stroke-dashoffset:0; }
+  .errcount{ font-size:0.9rem; color:var(--text-dim); }
+  .errcount b{ color:var(--coral); }
+
+  /* ---- word + status column ---- */
+  .panel{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:18px 20px;
+    background: var(--card);
+    margin-bottom:18px;
+  }
+  .roles{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+  .role-chip{
+    font-size:0.8rem; padding:6px 12px; border-radius:20px;
+    border:1px solid var(--line); color:var(--text-dim);
+  }
+  .role-chip b{ color:var(--text); }
+  .role-chip.mine{ border-color:currentColor; }
+  .role-chip.writer{ color:var(--amber); }
+  .role-chip.guesser{ color:var(--sky); }
+
+  .word{
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight:700;
+    font-size:clamp(1.4rem,5vw,2rem);
+    letter-spacing:6px;
+    text-align:center;
+    margin:22px 0;
+    word-break:break-all;
+    min-height:2.4em;
+  }
+  .word .blank{ color:var(--text-dim); }
+  .word .filled{ color:var(--text); }
+
+  .msg{ text-align:center; color:var(--text-dim); font-size:0.95rem; margin:10px 0 18px; min-height:1.3em; }
+  .result{ text-align:center; font-weight:700; font-size:1.3rem; margin:6px 0; }
+  .result.won{ color:var(--sky); }
+  .result.lost{ color:var(--coral); }
+
+  /* buttons */
+  .btn{
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--card);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:9px 16px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:0.9rem;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn:hover:not(:disabled){ background:#eef0f3; }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .btn.amber{ border-color:var(--amber); color:var(--amber); }
+  .btn.sky{ border-color:var(--sky); color:var(--sky); }
+  .btn.coral{ border-color:var(--coral); color:var(--coral); }
+  .btn.big{ padding:12px 22px; font-size:1rem; display:block; margin:14px auto 0; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+
+  form.inline{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px; }
+  input[type=text]{
+    font-family: Arial, Helvetica, sans-serif;
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:6px;
+    font-size:0.95rem;
+    outline:none;
+  }
+  input[type=text]:focus{ border-color:var(--sky); }
+  input[type=text]::placeholder{ color:var(--text-dim); }
+
+  /* keyboard */
+  .keyboard{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(34px,1fr));
+    gap:6px;
+    margin-top:16px;
+  }
+  .key{
+    font-family: Arial, Helvetica, sans-serif;
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 0;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:0.85rem;
+    font-weight:700;
+  }
+  .key:hover:not(:disabled){ background:#eef0f3; }
+  .key:disabled{ opacity:0.3; cursor:not-allowed; }
+  .key.right{ border-color:var(--sky); color:var(--sky); opacity:0.6; }
+  .key.wrong{ border-color:var(--coral); color:var(--coral); opacity:0.6; }
+
+  footer{ text-align:center; color:var(--text-dim); font-size:0.75rem; margin-top:30px; max-width:520px; }
+  .conn{ position:fixed; top:10px; right:14px; font-size:0.7rem; color:var(--text-dim); }
+  .conn.err{ color:var(--coral); }
+</style>
+</head>
+<body>
+
+<div class="conn" id="conn">conectando…</div>
+
+<div class="wrap">
+  <header>
+    <h1>Forca ao Vivo</h1>
+    <div class="sub">uma pessoa escreve, uma pessoa adivinha, o resto assiste</div>
+  </header>
+
+  <div class="board">
+    <div class="gallows-box">
+      <svg id="hangman" viewBox="0 0 200 250">
+        <!-- forca fixa -->
+        <line x1="20" y1="230" x2="120" y2="230"></line>
+        <line x1="45" y1="230" x2="45" y2="20"></line>
+        <line x1="45" y1="20" x2="140" y2="20"></line>
+        <line x1="140" y1="20" x2="140" y2="45"></line>
+        <!-- partes do corpo (reveladas conforme erra) -->
+        <circle class="part" id="p-head" cx="140" cy="62" r="17"></circle>
+        <line class="part" id="p-body" x1="140" y1="79" x2="140" y2="150"></line>
+        <line class="part" id="p-arml" x1="140" y1="95" x2="112" y2="122"></line>
+        <line class="part" id="p-armr" x1="140" y1="95" x2="168" y2="122"></line>
+        <line class="part" id="p-legl" x1="140" y1="150" x2="115" y2="190"></line>
+        <line class="part" id="p-legr" x1="140" y1="150" x2="165" y2="190"></line>
+      </svg>
+      <div class="errcount">erros: <b id="errNum">0</b>/6</div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="roles">
+          <span class="role-chip writer" id="chipWriter">✏️ quem escreve: <b>ninguém</b></span>
+          <span class="role-chip guesser" id="chipGuesser">🎯 quem adivinha: <b>ninguém</b></span>
+        </div>
+        <div class="row" id="claimRow"></div>
+      </div>
+
+      <div class="panel">
+        <div class="word" id="wordDisplay"></div>
+        <div class="msg" id="msg"></div>
+        <div id="resultBox"></div>
+
+        <form class="inline" id="writerForm" style="display:none">
+          <input type="text" id="wordInput" placeholder="digite a palavra secreta" autocomplete="off" maxlength="30">
+          <button class="btn amber" type="submit">Definir palavra</button>
+        </form>
+
+        <form class="inline" id="wholeWordForm" style="display:none">
+          <input type="text" id="guessWordInput" placeholder="tentar a palavra toda" autocomplete="off" maxlength="30">
+          <button class="btn sky" type="submit">Tentar</button>
+        </form>
+
+        <div class="keyboard" id="keyboard"></div>
+
+        <div class="row" id="endRow" style="display:none">
+          <button class="btn big sky" id="resetBtn">Jogar de novo</button>
+        </div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn coral" id="leaveBtn" style="display:none">Sair do papel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Sala única, compartilhada por qualquer pessoa que abrir esta página. Não é um jogo à prova de trapaça:
+    quem souber abrir o console do navegador consegue ver a palavra antes da hora — combine as regras com quem estiver jogando 🙂
+  </footer>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getFirestore, doc, onSnapshot, setDoc, updateDoc, getDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDiTrxcE__lRnjiMvY3qwX25Cky49Kvbx4",
+    authDomain: "joguinhosbonito.firebaseapp.com",
+    projectId: "joguinhosbonito",
+    storageBucket: "joguinhosbonito.firebasestorage.app",
+    messagingSenderId: "886026729494",
+    appId: "1:886026729494:web:69b8f2d5701b29a9b5dd37",
+    measurementId: "G-Q24M5QTJG1"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const gameRef = doc(db, "forca", "sala-unica");
+
+  const MAX_ERROS = 6;
+  const ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+  // identidade do visitante, guardada no navegador
+  let MY_ID = localStorage.getItem("forca_my_id");
+  if (!MY_ID) {
+    MY_ID = crypto.randomUUID();
+    localStorage.setItem("forca_my_id", MY_ID);
+  }
+
+  const initialState = {
+    writerId: null,
+    guesserId: null,
+    word: "",
+    guessedLetters: [],
+    wrongGuesses: [],
+    status: "lobby", // lobby | playing | finished
+    result: null,    // won | lost
+    maxErrors: MAX_ERROS,
+    updatedAt: serverTimestamp()
+  };
+
+  const norm = (s) => (s || "")
+    .toString().toUpperCase().trim()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // ---------- elementos ----------
+  const connEl = document.getElementById("conn");
+  const chipWriter = document.getElementById("chipWriter");
+  const chipGuesser = document.getElementById("chipGuesser");
+  const claimRow = document.getElementById("claimRow");
+  const wordDisplay = document.getElementById("wordDisplay");
+  const msgEl = document.getElementById("msg");
+  const resultBox = document.getElementById("resultBox");
+  const writerForm = document.getElementById("writerForm");
+  const wordInput = document.getElementById("wordInput");
+  const wholeWordForm = document.getElementById("wholeWordForm");
+  const guessWordInput = document.getElementById("guessWordInput");
+  const keyboard = document.getElementById("keyboard");
+  const endRow = document.getElementById("endRow");
+  const resetBtn = document.getElementById("resetBtn");
+  const leaveBtn = document.getElementById("leaveBtn");
+  const errNum = document.getElementById("errNum");
+
+  ALFABETO.forEach(l => {
+    const b = document.createElement("button");
+    b.className = "key";
+    b.textContent = l;
+    b.dataset.letter = l;
+    b.addEventListener("click", () => guessLetter(l));
+    keyboard.appendChild(b);
+  });
+
+  async function ensureDoc() {
+    try {
+      const snap = await getDoc(gameRef);
+      if (!snap.exists()) await setDoc(gameRef, initialState);
+      connEl.textContent = "conectado";
+      connEl.classList.remove("err");
+    } catch (e) {
+      connEl.textContent = "sem acesso ao Firestore — confira as regras do banco";
+      connEl.classList.add("err");
+      console.error(e);
+    }
+  }
+
+  onSnapshot(gameRef, (snap) => {
+    if (!snap.exists()) { ensureDoc(); return; }
+    render(snap.data());
+  }, (err) => {
+    connEl.textContent = "sem acesso ao Firestore — confira as regras do banco";
+    connEl.classList.add("err");
+    console.error(err);
+  });
+
+  ensureDoc();
+
+  // ---------- ações ----------
+  async function claimWriter() {
+    const snap = await getDoc(gameRef);
+    const s = snap.data();
+    if (s.writerId) return;
+    await updateDoc(gameRef, { writerId: MY_ID, updatedAt: serverTimestamp() });
+  }
+
+  async function claimGuesser() {
+    const snap = await getDoc(gameRef);
+    const s = snap.data();
+    if (s.guesserId || s.writerId === MY_ID) return;
+    const patch = { guesserId: MY_ID, updatedAt: serverTimestamp() };
+    if (s.word) patch.status = "playing";
+    await updateDoc(gameRef, patch);
+  }
+
+  async function submitWord(rawWord) {
+    const snap = await getDoc(gameRef);
+    const s = snap.data();
+    if (s.writerId !== MY_ID || s.word) return;
+    if (!rawWord.trim()) return;
+    const patch = {
+      word: rawWord.trim(),
+      guessedLetters: [],
+      wrongGuesses: [],
+      result: null,
+      updatedAt: serverTimestamp()
+    };
+    if (s.guesserId) patch.status = "playing";
+    await updateDoc(gameRef, patch);
+  }
+
+  async function guessLetter(letter) {
+    const snap = await getDoc(gameRef);
+    const s = snap.data();
+    if (s.guesserId !== MY_ID || s.status !== "playing") return;
+    const L = norm(letter);
+    if (s.guessedLetters.includes(L) || s.wrongGuesses.includes(L)) return;
+
+    const wordLetters = [...new Set(norm(s.word).replace(/[^A-Z]/g, "").split(""))];
+    let guessedLetters = s.guessedLetters;
+    let wrongGuesses = s.wrongGuesses;
+
+    if (wordLetters.includes(L)) {
+      guessedLetters = [...guessedLetters, L];
+    } else {
+      wrongGuesses = [...wrongGuesses, L];
+    }
+
+    const patch = { guessedLetters, wrongGuesses, updatedAt: serverTimestamp() };
+    const won = wordLetters.every(l => guessedLetters.includes(l));
+    const lost = wrongGuesses.length >= MAX_ERROS;
+    if (won) { patch.status = "finished"; patch.result = "won"; }
+    else if (lost) { patch.status = "finished"; patch.result = "lost"; }
+
+    await updateDoc(gameRef, patch);
+  }
+
+  async function guessWholeWord(guess) {
+    const snap = await getDoc(gameRef);
+    const s = snap.data();
+    if (s.guesserId !== MY_ID || s.status !== "playing") return;
+    if (!guess.trim()) return;
+
+    if (norm(guess) === norm(s.word)) {
+      const wordLetters = [...new Set(norm(s.word).replace(/[^A-Z]/g, "").split(""))];
+      await updateDoc(gameRef, {
+        guessedLetters: wordLetters, status: "finished", result: "won", updatedAt: serverTimestamp()
+      });
+    } else {
+      const wrongGuesses = [...s.wrongGuesses, "★" + guess.trim()];
+      const patch = { wrongGuesses, updatedAt: serverTimestamp() };
+      if (wrongGuesses.length >= MAX_ERROS) { patch.status = "finished"; patch.result = "lost"; }
+      await updateDoc(gameRef, patch);
+    }
+  }
+
+  async function resetGame() {
+    await setDoc(gameRef, initialState);
+  }
+
+  async function leaveRole() {
+    await resetGame();
+  }
+
+  // ---------- render ----------
+  function render(s) {
+    // placar de erros / boneco
+    const errors = s.wrongGuesses ? s.wrongGuesses.length : 0;
+    errNum.textContent = Math.min(errors, MAX_ERROS);
+    const parts = ["p-head", "p-body", "p-arml", "p-armr", "p-legl", "p-legr"];
+    parts.forEach((id, i) => {
+      document.getElementById(id).classList.toggle("drawn", i < errors);
+    });
+
+    // chips de papel
+    const iAmWriter = s.writerId === MY_ID;
+    const iAmGuesser = s.guesserId === MY_ID;
+    chipWriter.innerHTML = `✏️ quem escreve: <b>${s.writerId ? (iAmWriter ? "você" : "alguém") : "ninguém"}</b>`;
+    chipGuesser.innerHTML = `🎯 quem adivinha: <b>${s.guesserId ? (iAmGuesser ? "você" : "alguém") : "ninguém"}</b>`;
+    chipWriter.classList.toggle("mine", iAmWriter);
+    chipGuesser.classList.toggle("mine", iAmGuesser);
+
+    // botões de reivindicar papel
+    claimRow.innerHTML = "";
+    if (s.status !== "finished") {
+      if (!s.writerId) {
+        claimRow.appendChild(makeBtn("Ser quem escreve ✏️", "amber", claimWriter));
+      }
+      if (!s.guesserId && !iAmWriter) {
+        claimRow.appendChild(makeBtn("Ser quem adivinha 🎯", "sky", claimGuesser));
+      }
+    }
+
+    leaveBtn.style.display = (iAmWriter || iAmGuesser) && s.status !== "finished" ? "inline-block" : "none";
+
+    // palavra
+    if (s.status === "lobby" && !s.word) {
+      wordDisplay.textContent = "";
+      msgEl.textContent = s.writerId
+        ? (iAmWriter ? "Digite a palavra secreta abaixo." : "A pessoa que escreve está pensando na palavra…")
+        : "Aguardando alguém topar escrever a palavra.";
+    } else if (s.word) {
+      const chars = s.word.split("");
+      const normed = norm(s.word).split("");
+      wordDisplay.innerHTML = chars.map((ch, i) => {
+        const nc = normed[i];
+        if (!/[A-Z]/.test(nc)) return `<span class="filled">${ch === " " ? "&nbsp;&nbsp;" : ch}</span>`;
+        if (s.guessedLetters.includes(nc)) return `<span class="filled">${ch}</span>`;
+        return `<span class="blank">_</span>`;
+      }).join(" ");
+
+      if (s.status === "lobby") {
+        msgEl.textContent = "Palavra definida! Aguardando alguém topar adivinhar.";
+      } else if (s.status === "playing") {
+        msgEl.textContent = iAmGuesser
+          ? "Sua vez: clique nas letras ou tente a palavra inteira."
+          : "Jogo em andamento…";
+      } else if (s.status === "finished") {
+        msgEl.textContent = "";
+      }
+    }
+
+    // formulário de escrever palavra
+    writerForm.style.display = (iAmWriter && s.status === "lobby" && !s.word) ? "flex" : "none";
+
+    // teclado e formulário de tentar palavra toda
+    const canGuess = iAmGuesser && s.status === "playing";
+    wholeWordForm.style.display = canGuess ? "flex" : "none";
+    keyboard.style.display = s.word ? "grid" : "none";
+    [...keyboard.children].forEach(btn => {
+      const L = btn.dataset.letter;
+      btn.classList.remove("right", "wrong");
+      if (s.guessedLetters && s.guessedLetters.includes(L)) btn.classList.add("right");
+      if (s.wrongGuesses && s.wrongGuesses.includes(L)) btn.classList.add("wrong");
+      btn.disabled = !canGuess || (s.guessedLetters && s.guessedLetters.includes(L)) || (s.wrongGuesses && s.wrongGuesses.includes(L));
+    });
+
+    // resultado
+    if (s.status === "finished") {
+      const won = s.result === "won";
+      resultBox.innerHTML = `<div class="result ${won ? "won" : "lost"}">
+        ${won ? "🎉 Acertou! A palavra era \"" + s.word + "\"" : "💀 Não foi dessa vez! A palavra era \"" + s.word + "\""}
+      </div>`;
+      endRow.style.display = "flex";
+    } else {
+      resultBox.innerHTML = "";
+      endRow.style.display = "none";
+    }
+  }
+
+  function makeBtn(label, cls, onClick) {
+    const b = document.createElement("button");
+    b.className = "btn " + cls;
+    b.textContent = label;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  // ---------- listeners de formulário ----------
+  writerForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    submitWord(wordInput.value);
+    wordInput.value = "";
+  });
+
+  wholeWordForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    guessWholeWord(guessWordInput.value);
+    guessWordInput.value = "";
+  });
+
+  resetBtn.addEventListener("click", resetGame);
+  leaveBtn.addEventListener("click", () => {
+    if (confirm("Isso reinicia o jogo pra todo mundo. Continuar?")) leaveRole();
+  });
+</script>
+</body>
+</html>
